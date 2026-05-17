@@ -50,4 +50,7 @@ connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`Backend listening on http://localhost:${PORT}`);
   });
+}).catch((err) => {
+  console.error("Failed to connect to MongoDB:", err.message);
+  process.exit(1);
 });
