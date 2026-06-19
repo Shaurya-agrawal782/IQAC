@@ -15,4 +15,8 @@ client.interceptors.request.use((config) => {
   return config;
 });
 
+export const getActionPriorityQueue = (params) => client.get("/analytics/action-priority", { params });
+export const getActionPriorityOverview = () => client.get("/analytics/action-priority/overview");
+export const runWhatIfSimulation = (payload) => client.post("/analytics/what-if-simulation", payload);
+
 export default client;

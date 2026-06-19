@@ -9,6 +9,9 @@ import {
 	subjectPassAnalytics,
 	achievementAnalytics,
 	studentParticipationAnalytics,
+	getActionPriorityQueue,
+	getActionPriorityOverview,
+	runWhatIfSimulation,
 	publicStats
 } from "../controllers/analyticsController.js";
 import { authorize, protect } from "../middleware/authMiddleware.js";
@@ -25,6 +28,10 @@ router.get("/department-comparison-extended", protect, authorize("admin", "hod",
 router.get("/risk-students", protect, authorize("admin", "hod", "faculty"), riskStudents);
 router.get("/student-comparison", protect, authorize("admin", "hod", "faculty"), studentComparison);
 router.get("/section-comparison", protect, authorize("admin", "hod", "faculty"), sectionComparison);
+
+router.get("/action-priority", protect, authorize("admin", "hod", "faculty"), getActionPriorityQueue);
+router.get("/action-priority/overview", protect, authorize("admin", "hod", "faculty"), getActionPriorityOverview);
+router.post("/what-if-simulation", protect, authorize("admin", "hod", "faculty"), runWhatIfSimulation);
 
 router.get("/subject-pass", protect, authorize("admin", "hod", "faculty"), subjectPassAnalytics);
 router.get("/achievements", protect, authorize("admin", "hod", "faculty"), achievementAnalytics);

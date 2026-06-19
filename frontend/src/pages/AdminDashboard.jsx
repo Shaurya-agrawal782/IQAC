@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import client from "../api/client";
+import client, { getActionPriorityQueue, getActionPriorityOverview } from "../api/client";
 import Sidebar from "../components/Sidebar.jsx";
 import StatsCards from "../components/StatsCards.jsx";
 import RiskChart from "../components/RiskChart.jsx";
 import DepartmentChart from "../components/DepartmentChart.jsx";
 import AddFacultyDrawer from "../components/AddFacultyDrawer.jsx";
-
 import NlqSearchBar from "../components/NlqSearchBar.jsx";
+import ActionPriorityScoreCard from "../components/digitalTwin/ActionPriorityScoreCard.jsx";
+import InterventionQueue from "../components/digitalTwin/InterventionQueue.jsx";
+import WhatIfSimulator from "../components/digitalTwin/WhatIfSimulator.jsx";
 
 const NAV_ITEMS = [
   "Overview",
@@ -31,6 +33,29 @@ export default function AdminDashboard() {
   const [analytics, setAnalytics] = useState(null);
   const [faculties, setFaculties] = useState([]);
   const [departmentComparisonRows, setDepartmentComparisonRows] = useState([]);
+  const [priorityOverview, setPriorityOverview] = useState(null);
+  const [priorityQueue, setPriorityQueue] = useState([]);
+  const [priorityLoading, setPriorityLoading] = useState(true);
+  const [priorityError, setPriorityError] = useState("");
+  const [selectedPriorityEntity, setSelectedPriorityEntity] = useState(null);
+
+  const loadPriorityData = async () => {
+    setPriorityLoading(true);
+    setPriorityError("");
+    try {
+      const [overviewRes, queueRes] = await Promise.all([
+        getActionPriorityOverview(),
+        getActionPriorityQueue()
+      ]);
+      setPriorityOverview(overviewRes.data.data);
+      setPriorityQueue(queueRes.data.data.items);
+    } catch (err) {
+      console.error("Error loading priority data:", err);
+      setPriorityError("Unable to load intervention queue right now.");
+    } finally {
+      setPriorityLoading(false);
+    }
+  };
 
   const loadDashboard = async () => {
     const [entitiesRes, analyticsRes, facultyRes, departmentCompareRes] = await Promise.all([
@@ -48,6 +73,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     loadDashboard().catch(() => null);
+    loadPriorityData().catch(() => null);
   }, []);
 
   useEffect(() => {
@@ -225,6 +251,42 @@ export default function AdminDashboard() {
           <div className="space-y-6">
             <NlqSearchBar />
             <StatsCards stats={stats} />
+
+            {/* College Digital Twin Intervention Engine */}
+            <section className="space-y-4">
+              <div>
+                <h3 className="font-heading text-xl text-brand-ink dark:text-white">
+                  College Digital Twin Intervention Engine
+                </h3>
+                <p className="text-sm text-brand-ink/75 dark:text-slate-400">
+                  Ranks students, cohorts, departments, and accreditation gaps by urgency using existing academic and IQAC data.
+                </p>
+              </div>
+
+              {priorityLoading ? (
+                <div className="rounded-3xl border border-white/45 bg-white/45 p-6 text-center text-sm text-brand-ink/60 dark:bg-slate-900/30">
+                  Analyzing institutional datasets & calculating urgency indexes...
+                </div>
+              ) : priorityError ? (
+                <div className="rounded-3xl border border-white/45 bg-white/45 p-6 text-center text-sm text-red-500 dark:bg-slate-900/30">
+                  {priorityError}
+                </div>
+              ) : (
+                <div className="space-y-5">
+                  <div className="grid gap-5 xl:grid-cols-[1.2fr,2fr]">
+                    <ActionPriorityScoreCard overview={priorityOverview} />
+                    <InterventionQueue
+                      items={priorityQueue}
+                      onSimulateIntervention={setSelectedPriorityEntity}
+                    />
+                  </div>
+                  <WhatIfSimulator
+                    selectedEntity={selectedPriorityEntity}
+                    defaultBaseline={priorityQueue && priorityQueue[0] ? priorityQueue[0] : null}
+                  />
+                </div>
+              )}
+            </section>
 
             <div className="grid gap-5 xl:grid-cols-2">
               <RiskChart data={riskDistribution} />

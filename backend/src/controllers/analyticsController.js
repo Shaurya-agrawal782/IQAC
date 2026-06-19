@@ -13,6 +13,14 @@ import {
   parsePagination,
   paginatedResponse
 } from "../utils/analyticsHelpers.js";
+import AccreditationItem from "../models/AccreditationItem.js";
+import {
+  calculateActionPriorityScore,
+  calculatePlacementReadinessScore,
+  buildInterventionRecommendation,
+  simulateInterventionImpact
+} from "../utils/riskEngine.js";
+
 
 // ─────────────────────────────────────────────────────────────
 //  1. INSTITUTIONAL OVERVIEW  (GET /analytics/overview)
@@ -691,6 +699,690 @@ export const studentParticipationAnalytics = async (req, res) => {
   });
 };
 
+// ─────────────────────────────────────────────────────────────
+//  ACTION PRIORITY QUEUE (GET /analytics/action-priority)
+// ─────────────────────────────────────────────────────────────
+export const getActionPriorityQueue = async (req, res) => {
+  try {
+    const { department, semester, severity } = req.query;
+
+    const [depts, students, marks, events, placements, accItems] = await Promise.all([
+      Department.find().lean(),
+      Student.find().populate("department", "name code").lean(),
+      Mark.find().lean(),
+      StudentEvent.find().lean(),
+      Placement.find().lean(),
+      AccreditationItem.find().lean()
+    ]);
+
+    const deptMap = {};
+    depts.forEach(d => {
+      deptMap[d._id.toString()] = d;
+    });
+
+    const studentMarksMap = {};
+    marks.forEach(m => {
+      const sid = m.student.toString();
+      if (!studentMarksMap[sid]) studentMarksMap[sid] = [];
+      studentMarksMap[sid].push(m);
+    });
+
+    const studentEventsMap = {};
+    events.forEach(e => {
+      const sid = e.student.toString();
+      studentEventsMap[sid] = (studentEventsMap[sid] || 0) + 1;
+    });
+
+    const accDeptMap = {};
+    accItems.forEach(item => {
+      if (!item.department) return;
+      const did = item.department.toString();
+      if (!accDeptMap[did]) accDeptMap[did] = { total: 0, completed: 0 };
+      accDeptMap[did].total++;
+      if (item.completed) accDeptMap[did].completed++;
+    });
+
+    const placementDeptMap = {};
+    placements.forEach(p => {
+      const did = p.department.toString();
+      const rate = p.totalEligible > 0 ? (p.totalPlaced / p.totalEligible) * 100 : 0;
+      placementDeptMap[did] = rate;
+    });
+
+    const items = [];
+
+    // Students
+    students.forEach(s => {
+      const did = s.department?._id?.toString() || "";
+      const dCode = s.department?.code || "NA";
+      const sMarks = studentMarksMap[s._id.toString()] || [];
+      const failedSubjects = sMarks.filter(m => !m.passed).length;
+      const latestMetric = s.metrics?.at(-1) || {};
+      const previousMetric = s.metrics?.length > 1 ? s.metrics[s.metrics.length - 2] : null;
+      const coCurricularCount = studentEventsMap[s._id.toString()] || 0;
+      const coreSubjectAvg = sMarks.length > 0 ? sMarks.reduce((sum, m) => sum + m.total, 0) / sMarks.length : 100;
+      const deptPlacementRate = placementDeptMap[did] || 70;
+      const accRate = accDeptMap[did] ? (accDeptMap[did].completed / accDeptMap[did].total) * 100 : 100;
+
+      const prResult = calculatePlacementReadinessScore({
+        cgpa: latestMetric.cgpa || 0,
+        backlogCount: latestMetric.backlogCount || 0,
+        attendance: latestMetric.attendancePercent || 100,
+        passedCoreSubjects: sMarks.filter(m => m.passed).length,
+        coCurricularCount,
+        deptPlacementRate
+      });
+
+      const priorityResult = calculateActionPriorityScore({
+        attendancePercent: latestMetric.attendancePercent || 100,
+        cgpa: latestMetric.cgpa || 10,
+        sgpa: latestMetric.sgpa || null,
+        previousCgpa: previousMetric?.cgpa || null,
+        previousSgpa: previousMetric?.sgpa || null,
+        backlogCount: latestMetric.backlogCount || 0,
+        failedSubjects,
+        placementReadiness: prResult.score,
+        accreditationCompletion: accRate,
+        coCurricularCount,
+        coreSubjectAvg
+      });
+
+      items.push({
+        id: `student_${s._id}`,
+        entityType: "student",
+        label: `${s.name} (${s.rollNo})`,
+        department: dCode,
+        semester: s.currentSemester,
+        score: priorityResult.score,
+        severity: priorityResult.severity,
+        drivers: priorityResult.drivers,
+        reasons: priorityResult.reasons,
+        recommendedActions: priorityResult.recommendedActions,
+        metrics: {
+          attendancePercent: latestMetric.attendancePercent || 0,
+          cgpa: latestMetric.cgpa || 0,
+          backlogCount: latestMetric.backlogCount || 0,
+          failedSubjects,
+          placementReadiness: prResult.score,
+          accreditationCompletion: accRate
+        }
+      });
+    });
+
+    // Cohorts
+    const cohortGroups = {};
+    students.forEach(s => {
+      const did = s.department?._id?.toString() || "";
+      const dCode = s.department?.code || "NA";
+      const sem = s.currentSemester;
+      const key = `${dCode}_Sem${sem}`;
+      if (!cohortGroups[key]) {
+        cohortGroups[key] = { dCode, did, semester: sem, students: [] };
+      }
+      cohortGroups[key].students.push(s);
+    });
+
+    Object.entries(cohortGroups).forEach(([key, group]) => {
+      const gStudents = group.students;
+      const count = gStudents.length;
+      if (count === 0) return;
+
+      let attSum = 0, cgpaSum = 0, backlogSum = 0, failedSum = 0;
+      let previousCgpaSum = 0, previousCount = 0;
+
+      gStudents.forEach(s => {
+        const latestMetric = s.metrics?.at(-1) || {};
+        const previousMetric = s.metrics?.length > 1 ? s.metrics[s.metrics.length - 2] : null;
+        attSum += latestMetric.attendancePercent || 100;
+        cgpaSum += latestMetric.cgpa || 10;
+        backlogSum += latestMetric.backlogCount || 0;
+        const sMarks = studentMarksMap[s._id.toString()] || [];
+        failedSum += sMarks.filter(m => !m.passed).length;
+        if (previousMetric) {
+          previousCgpaSum += previousMetric.cgpa;
+          previousCount++;
+        }
+      });
+
+      const avgAtt = attSum / count;
+      const avgCgpa = cgpaSum / count;
+      const avgBacklogs = backlogSum / count;
+      const avgFailed = failedSum / count;
+      const avgPreviousCgpa = previousCount > 0 ? previousCgpaSum / previousCount : null;
+      const accRate = accDeptMap[group.did] ? (accDeptMap[group.did].completed / accDeptMap[group.did].total) * 100 : 100;
+
+      const cohortPr = calculatePlacementReadinessScore({
+        cgpa: avgCgpa,
+        backlogCount: avgBacklogs,
+        attendance: avgAtt,
+        passedCoreSubjects: 5,
+        coCurricularCount: 3,
+        deptPlacementRate: placementDeptMap[group.did] || 70
+      });
+
+      const cohortPriority = calculateActionPriorityScore({
+        attendancePercent: avgAtt,
+        cgpa: avgCgpa,
+        previousCgpa: avgPreviousCgpa,
+        backlogCount: avgBacklogs,
+        failedSubjects: avgFailed,
+        placementReadiness: cohortPr.score,
+        accreditationCompletion: accRate,
+        coCurricularCount: 4,
+        coreSubjectAvg: 75
+      });
+
+      items.push({
+        id: `cohort_${group.dCode}_sem${group.semester}`,
+        entityType: "cohort",
+        label: `${group.dCode} Semester ${group.semester} Cohort`,
+        department: group.dCode,
+        semester: group.semester,
+        score: cohortPriority.score,
+        severity: cohortPriority.severity,
+        drivers: cohortPriority.drivers,
+        reasons: cohortPriority.reasons,
+        recommendedActions: cohortPriority.recommendedActions,
+        metrics: {
+          attendancePercent: Math.round(avgAtt),
+          cgpa: Number(avgCgpa.toFixed(2)),
+          backlogCount: Number(avgBacklogs.toFixed(1)),
+          failedSubjects: Math.round(avgFailed),
+          placementReadiness: cohortPr.score,
+          accreditationCompletion: accRate
+        }
+      });
+    });
+
+    // Departments
+    depts.forEach(d => {
+      const did = d._id.toString();
+      const dCode = d.code;
+      const dStudents = students.filter(s => s.department?._id?.toString() === did);
+      const count = dStudents.length;
+      if (count === 0) return;
+
+      let attSum = 0, cgpaSum = 0, backlogSum = 0, failedSum = 0;
+      dStudents.forEach(s => {
+        const latestMetric = s.metrics?.at(-1) || {};
+        attSum += latestMetric.attendancePercent || 100;
+        cgpaSum += latestMetric.cgpa || 10;
+        backlogSum += latestMetric.backlogCount || 0;
+        const sMarks = studentMarksMap[s._id.toString()] || [];
+        failedSum += sMarks.filter(m => !m.passed).length;
+      });
+
+      const avgAtt = attSum / count;
+      const avgCgpa = cgpaSum / count;
+      const avgBacklogs = backlogSum / count;
+      const avgFailed = failedSum / count;
+      const accRate = accDeptMap[did] ? (accDeptMap[did].completed / accDeptMap[did].total) * 100 : 100;
+      const deptPr = placementDeptMap[did] || 70;
+
+      const deptPriority = calculateActionPriorityScore({
+        attendancePercent: avgAtt,
+        cgpa: avgCgpa,
+        backlogCount: avgBacklogs,
+        failedSubjects: avgFailed,
+        placementReadiness: deptPr,
+        accreditationCompletion: accRate,
+        coCurricularCount: 3,
+        coreSubjectAvg: 75
+      });
+
+      items.push({
+        id: `department_${dCode}`,
+        entityType: "department",
+        label: `Department of ${d.name} (${dCode})`,
+        department: dCode,
+        semester: null,
+        score: deptPriority.score,
+        severity: deptPriority.severity,
+        drivers: deptPriority.drivers,
+        reasons: deptPriority.reasons,
+        recommendedActions: deptPriority.recommendedActions,
+        metrics: {
+          attendancePercent: Math.round(avgAtt),
+          cgpa: Number(avgCgpa.toFixed(2)),
+          backlogCount: Number(avgBacklogs.toFixed(1)),
+          failedSubjects: Math.round(avgFailed),
+          placementReadiness: Math.round(deptPr),
+          accreditationCompletion: accRate
+        }
+      });
+    });
+
+    // Accreditation
+    depts.forEach(d => {
+      const did = d._id.toString();
+      const dCode = d.code;
+      const acc = accDeptMap[did] || { completed: 0, total: 0 };
+      if (acc.total === 0) return;
+      const accRate = (acc.completed / acc.total) * 100;
+
+      const priority = calculateActionPriorityScore({
+        accreditationCompletion: accRate,
+        attendancePercent: 100,
+        cgpa: 10,
+        backlogCount: 0,
+        failedSubjects: 0,
+        placementReadiness: 100,
+        coCurricularCount: 5,
+        coreSubjectAvg: 90
+      });
+
+      items.push({
+        id: `accreditation_${dCode}`,
+        entityType: "accreditation",
+        label: `${dCode} Accreditation Readiness`,
+        department: dCode,
+        semester: null,
+        score: priority.score,
+        severity: priority.severity,
+        drivers: priority.drivers,
+        reasons: priority.reasons,
+        recommendedActions: priority.recommendedActions,
+        metrics: {
+          attendancePercent: 100,
+          cgpa: 10,
+          backlogCount: 0,
+          failedSubjects: 0,
+          placementReadiness: 100,
+          accreditationCompletion: accRate
+        }
+      });
+    });
+
+    let filteredItems = items;
+    if (department) {
+      filteredItems = filteredItems.filter(item => item.department === department);
+    }
+    if (semester) {
+      filteredItems = filteredItems.filter(item => item.semester === Number(semester));
+    }
+    if (severity) {
+      filteredItems = filteredItems.filter(item => item.severity === severity.toLowerCase());
+    }
+
+    filteredItems.sort((a, b) => b.score - a.score);
+
+    const limit = Number(req.query.limit) || 15;
+    const paginatedItems = filteredItems.slice(0, limit);
+
+    const totalItems = filteredItems.length;
+    const criticalCount = filteredItems.filter(item => item.severity === "critical").length;
+    const highCount = filteredItems.filter(item => item.severity === "high").length;
+    const averageScore = totalItems > 0
+      ? Number((filteredItems.reduce((sum, item) => sum + item.score, 0) / totalItems).toFixed(1))
+      : 0;
+    const topPriorityLabel = filteredItems[0] ? `${filteredItems[0].entityType.toUpperCase()}: ${filteredItems[0].label}` : "None";
+
+    res.status(200).json({
+      success: true,
+      data: {
+        generatedAt: new Date().toISOString(),
+        summary: {
+          totalItems,
+          criticalCount,
+          highCount,
+          averageScore,
+          topPriorityLabel
+        },
+        items: paginatedItems
+      }
+    });
+  } catch (error) {
+    console.error("Error in getActionPriorityQueue:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────
+//  ACTION PRIORITY OVERVIEW (GET /analytics/action-priority/overview)
+// ─────────────────────────────────────────────────────────────
+export const getActionPriorityOverview = async (req, res) => {
+  try {
+    const [depts, students, marks, events, placements, accItems] = await Promise.all([
+      Department.find().lean(),
+      Student.find().populate("department", "name code").lean(),
+      Mark.find().lean(),
+      StudentEvent.find().lean(),
+      Placement.find().lean(),
+      AccreditationItem.find().lean()
+    ]);
+
+    const deptMap = {};
+    depts.forEach(d => { deptMap[d._id.toString()] = d; });
+
+    const studentMarksMap = {};
+    marks.forEach(m => {
+      const sid = m.student.toString();
+      if (!studentMarksMap[sid]) studentMarksMap[sid] = [];
+      studentMarksMap[sid].push(m);
+    });
+
+    const studentEventsMap = {};
+    events.forEach(e => {
+      const sid = e.student.toString();
+      studentEventsMap[sid] = (studentEventsMap[sid] || 0) + 1;
+    });
+
+    const accDeptMap = {};
+    accItems.forEach(item => {
+      if (!item.department) return;
+      const did = item.department.toString();
+      if (!accDeptMap[did]) accDeptMap[did] = { total: 0, completed: 0 };
+      accDeptMap[did].total++;
+      if (item.completed) accDeptMap[did].completed++;
+    });
+
+    const placementDeptMap = {};
+    placements.forEach(p => {
+      const did = p.department.toString();
+      const rate = p.totalEligible > 0 ? (p.totalPlaced / p.totalEligible) * 100 : 0;
+      placementDeptMap[did] = rate;
+    });
+
+    const items = [];
+
+    // Students
+    students.forEach(s => {
+      const did = s.department?._id?.toString() || "";
+      const dCode = s.department?.code || "NA";
+      const sMarks = studentMarksMap[s._id.toString()] || [];
+      const failedSubjects = sMarks.filter(m => !m.passed).length;
+      const latestMetric = s.metrics?.at(-1) || {};
+      const previousMetric = s.metrics?.length > 1 ? s.metrics[s.metrics.length - 2] : null;
+      const coCurricularCount = studentEventsMap[s._id.toString()] || 0;
+      const coreSubjectAvg = sMarks.length > 0 ? sMarks.reduce((sum, m) => sum + m.total, 0) / sMarks.length : 100;
+      const deptPlacementRate = placementDeptMap[did] || 70;
+      const accRate = accDeptMap[did] ? (accDeptMap[did].completed / accDeptMap[did].total) * 100 : 100;
+
+      const prResult = calculatePlacementReadinessScore({
+        cgpa: latestMetric.cgpa || 0,
+        backlogCount: latestMetric.backlogCount || 0,
+        attendance: latestMetric.attendancePercent || 100,
+        passedCoreSubjects: sMarks.filter(m => m.passed).length,
+        coCurricularCount,
+        deptPlacementRate
+      });
+
+      const priorityResult = calculateActionPriorityScore({
+        attendancePercent: latestMetric.attendancePercent || 100,
+        cgpa: latestMetric.cgpa || 10,
+        sgpa: latestMetric.sgpa || null,
+        previousCgpa: previousMetric?.cgpa || null,
+        previousSgpa: previousMetric?.sgpa || null,
+        backlogCount: latestMetric.backlogCount || 0,
+        failedSubjects,
+        placementReadiness: prResult.score,
+        accreditationCompletion: accRate,
+        coCurricularCount,
+        coreSubjectAvg
+      });
+
+      items.push({
+        id: `student_${s._id}`,
+        entityType: "student",
+        label: `${s.name} (${s.rollNo})`,
+        score: priorityResult.score,
+        severity: priorityResult.severity,
+        drivers: priorityResult.drivers,
+        reasons: priorityResult.reasons,
+        recommendedActions: priorityResult.recommendedActions
+      });
+    });
+
+    // Cohorts
+    const cohortGroups = {};
+    students.forEach(s => {
+      const did = s.department?._id?.toString() || "";
+      const dCode = s.department?.code || "NA";
+      const sem = s.currentSemester;
+      const key = `${dCode}_Sem${sem}`;
+      if (!cohortGroups[key]) {
+        cohortGroups[key] = { dCode, did, semester: sem, students: [] };
+      }
+      cohortGroups[key].students.push(s);
+    });
+
+    Object.entries(cohortGroups).forEach(([key, group]) => {
+      const gStudents = group.students;
+      const count = gStudents.length;
+      if (count === 0) return;
+
+      let attSum = 0, cgpaSum = 0, backlogSum = 0, failedSum = 0;
+      let previousCgpaSum = 0, previousCount = 0;
+
+      gStudents.forEach(s => {
+        const latestMetric = s.metrics?.at(-1) || {};
+        const previousMetric = s.metrics?.length > 1 ? s.metrics[s.metrics.length - 2] : null;
+        attSum += latestMetric.attendancePercent || 100;
+        cgpaSum += latestMetric.cgpa || 10;
+        backlogSum += latestMetric.backlogCount || 0;
+        const sMarks = studentMarksMap[s._id.toString()] || [];
+        failedSum += sMarks.filter(m => !m.passed).length;
+        if (previousMetric) {
+          previousCgpaSum += previousMetric.cgpa;
+          previousCount++;
+        }
+      });
+
+      const avgAtt = attSum / count;
+      const avgCgpa = cgpaSum / count;
+      const avgBacklogs = backlogSum / count;
+      const avgFailed = failedSum / count;
+      const avgPreviousCgpa = previousCount > 0 ? previousCgpaSum / previousCount : null;
+      const accRate = accDeptMap[group.did] ? (accDeptMap[group.did].completed / accDeptMap[group.did].total) * 100 : 100;
+
+      const cohortPr = calculatePlacementReadinessScore({
+        cgpa: avgCgpa,
+        backlogCount: avgBacklogs,
+        attendance: avgAtt,
+        passedCoreSubjects: 5,
+        coCurricularCount: 3,
+        deptPlacementRate: placementDeptMap[group.did] || 70
+      });
+
+      const cohortPriority = calculateActionPriorityScore({
+        attendancePercent: avgAtt,
+        cgpa: avgCgpa,
+        previousCgpa: avgPreviousCgpa,
+        backlogCount: avgBacklogs,
+        failedSubjects: avgFailed,
+        placementReadiness: cohortPr.score,
+        accreditationCompletion: accRate,
+        coCurricularCount: 4,
+        coreSubjectAvg: 75
+      });
+
+      items.push({
+        id: `cohort_${group.dCode}_sem${group.semester}`,
+        entityType: "cohort",
+        label: `${group.dCode} Semester ${group.semester} Cohort`,
+        score: cohortPriority.score,
+        severity: cohortPriority.severity,
+        drivers: cohortPriority.drivers,
+        reasons: cohortPriority.reasons,
+        recommendedActions: cohortPriority.recommendedActions
+      });
+    });
+
+    if (items.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          actionPriorityScore: 0,
+          severity: "low",
+          topEntity: "None",
+          criticalItems: 0,
+          highItems: 0,
+          mainDrivers: [],
+          recommendation: {
+            title: "System Healthy",
+            summary: "No immediate academic risks detected.",
+            immediateActions: ["Maintain current reporting schedules"],
+            expectedImpact: "System stability",
+            timeline: "Routine"
+          }
+        }
+      });
+    }
+
+    items.sort((a, b) => b.score - a.score);
+    const topEntityItem = items[0];
+
+    const criticalCount = items.filter(i => i.severity === "critical").length;
+    const highCount = items.filter(i => i.severity === "high").length;
+    const avgScore = Math.round(items.reduce((sum, i) => sum + i.score, 0) / items.length);
+
+    const driverFreq = {};
+    items.forEach(i => {
+      (i.drivers || []).forEach(d => {
+        if (d !== "low_risk") {
+          driverFreq[d] = (driverFreq[d] || 0) + 1;
+        }
+      });
+    });
+
+    const mainDrivers = Object.entries(driverFreq)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(entry => entry[0]);
+
+    let severity = "low";
+    if (avgScore >= 80) severity = "critical";
+    else if (avgScore >= 60) severity = "high";
+    else if (avgScore >= 40) severity = "moderate";
+
+    const recommendation = buildInterventionRecommendation(topEntityItem);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        actionPriorityScore: avgScore,
+        severity,
+        topEntity: `${topEntityItem.entityType.toUpperCase()}: ${topEntityItem.label}`,
+        criticalItems: criticalCount,
+        highItems: highCount,
+        mainDrivers,
+        recommendation
+      }
+    });
+  } catch (error) {
+    console.error("Error in getActionPriorityOverview:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────
+//  WHAT-IF INTERVENTION SIMULATION (POST /analytics/what-if-simulation)
+// ─────────────────────────────────────────────────────────────
+export const runWhatIfSimulation = async (req, res) => {
+  try {
+    const { entityId, entityType, adjustments, baseMetrics: customBaseMetrics } = req.body;
+
+    let baseMetrics = customBaseMetrics || {};
+    let entityInfo = {
+      id: entityId || "custom_simulation",
+      label: "Custom Scenarios Simulation",
+      entityType: entityType || "student",
+      department: "NA",
+      semester: null
+    };
+
+    if (entityId && entityId !== "custom_simulation") {
+      if (entityType === "student") {
+        const studentId = entityId.replace("student_", "");
+        if (mongoose.Types.ObjectId.isValid(studentId)) {
+          const s = await Student.findById(studentId).populate("department", "name code").lean();
+          if (s) {
+            const latestMetric = s.metrics?.at(-1) || {};
+            const previousMetric = s.metrics?.length > 1 ? s.metrics[s.metrics.length - 2] : null;
+
+            const [marks, events, placements, accItems] = await Promise.all([
+              Mark.find({ student: s._id }).lean(),
+              StudentEvent.find({ student: s._id }).lean(),
+              Placement.find({ department: s.department?._id }).lean(),
+              AccreditationItem.find({ department: s.department?._id }).lean()
+            ]);
+
+            const failedSubjects = marks.filter(m => !m.passed).length;
+            const coCurricularCount = events.length;
+            const coreSubjectAvg = marks.length > 0 ? marks.reduce((sum, m) => sum + m.total, 0) / marks.length : 100;
+            
+            let accRate = 100;
+            if (accItems.length > 0) {
+              accRate = (accItems.filter(i => i.completed).length / accItems.length) * 100;
+            }
+
+            const deptPlacementRate = placements.length > 0
+              ? (placements.reduce((sum, p) => sum + (p.totalEligible > 0 ? (p.totalPlaced / p.totalEligible) * 100 : 0), 0) / placements.length)
+              : 70;
+
+            const prResult = calculatePlacementReadinessScore({
+              cgpa: latestMetric.cgpa || 0,
+              backlogCount: latestMetric.backlogCount || 0,
+              attendance: latestMetric.attendancePercent || 100,
+              passedCoreSubjects: marks.filter(m => m.passed).length,
+              coCurricularCount,
+              deptPlacementRate
+            });
+
+            baseMetrics = {
+              attendancePercent: latestMetric.attendancePercent || 100,
+              cgpa: latestMetric.cgpa || 10,
+              sgpa: latestMetric.sgpa || null,
+              previousCgpa: previousMetric?.cgpa || null,
+              previousSgpa: previousMetric?.sgpa || null,
+              backlogCount: latestMetric.backlogCount || 0,
+              failedSubjects,
+              placementReadiness: prResult.score,
+              accreditationCompletion: accRate,
+              coCurricularCount,
+              coreSubjectAvg
+            };
+
+            entityInfo = {
+              id: entityId,
+              label: `${s.name} (${s.rollNo})`,
+              entityType: "student",
+              department: s.department?.code || "NA",
+              semester: s.currentSemester
+            };
+          }
+        }
+      } else if (entityType === "cohort" || entityType === "department" || entityType === "accreditation") {
+        entityInfo = {
+          id: entityId,
+          label: entityId.replace(/_/g, " "),
+          entityType,
+          department: entityId.split("_")[1] || "NA",
+          semester: entityId.includes("sem") ? Number(entityId.split("sem")[1]) : null
+        };
+      }
+    }
+
+    const result = simulateInterventionImpact(baseMetrics, adjustments || {});
+
+    res.status(200).json({
+      success: true,
+      data: {
+        entity: entityInfo,
+        baseMetrics,
+        adjustments,
+        result,
+        note: "This is a deterministic scenario simulation based on current academic indicators, not a guaranteed prediction."
+      }
+    });
+  } catch (error) {
+    console.error("Error in runWhatIfSimulation:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────
+//  PUBLIC STATS  (GET /analytics/public-stats) — no auth
 // ─────────────────────────────────────────────────────────────
 //  PUBLIC STATS  (GET /analytics/public-stats) — no auth
 // ─────────────────────────────────────────────────────────────
