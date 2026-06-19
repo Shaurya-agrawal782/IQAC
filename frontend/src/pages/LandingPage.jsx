@@ -1,135 +1,96 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import CinematicBackground from "../components/CinematicBackground.jsx";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
-const MODULES = [
-  {
-    title: "Student Risk AI",
-    desc: "Predict low, medium, and high-risk students using attendance and marks.",
-    tone: "from-[#ff7b54]/30 to-[#ffc36a]/20"
-  },
-  {
-    title: "Department Intelligence",
-    desc: "Track pass percentage, CGPA trends, and section-wise performance.",
-    tone: "from-[#58a6ff]/30 to-[#4cc9f0]/20"
-  },
-  {
-    title: "Faculty Research Analytics",
-    desc: "Monitor publications, patents, and academic output.",
-    tone: "from-[#7f5af0]/30 to-[#c77dff]/20"
-  },
-  {
-    title: "NAAC / NBA Readiness Engine",
-    desc: "Track accreditation evidence and compliance status.",
-    tone: "from-[#1fbf75]/30 to-[#8be9a8]/20"
-  },
-  {
-    title: "Automated Reports",
-    desc: "Generate PDF and Excel reports for departments and administration.",
-    tone: "from-[#ff4d6d]/30 to-[#ff9e80]/20"
-  }
+const Icons = {
+  Risk: () => (
+    <svg className="h-5 w-5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+    </svg>
+  ),
+  Faculty: () => (
+    <svg className="h-5 w-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+    </svg>
+  ),
+  Department: () => (
+    <svg className="h-5 w-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+    </svg>
+  )
+};
+
+const rotatingPhrases = [
+  "Monitoring Students",
+  "Monitoring Faculty",
+  "Monitoring Departments",
+  "Monitoring Accreditation",
+  "Monitoring Reports",
+  "Monitoring Risk Signals"
 ];
 
-const CAPABILITIES = [
-  "Student Performance Tracking",
-  "Faculty Research Monitoring",
-  "Section-wise Analytics",
-  "Department CGPA Insights",
-  "Placement Tracking",
-  "Accreditation Monitoring"
-];
-
-const WORKFLOW = [
-  "Faculty Upload Data",
-  "AI Analyze Academic Performance",
-  "HOD Monitor Department Insights",
-  "Admin Generate Accreditation Reports"
-];
-
-function useCountUp(target, duration = 1400) {
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    let start = 0;
-    const stepMs = 25;
-    const increment = Math.max(1, Math.floor(target / (duration / stepMs)));
-
-    const timer = setInterval(() => {
-      start += increment;
-      if (start >= target) {
-        setCount(target);
-        clearInterval(timer);
-        return;
-      }
-      setCount(start);
-    }, stepMs);
-
-    return () => clearInterval(timer);
-  }, [target, duration]);
-
-  return count;
-}
-
-function CounterCard({ label, value, suffix }) {
-  const count = useCountUp(value);
+function MiniLivePulsePanel() {
   return (
-    <div className="rounded-2xl border border-white/15 bg-white/5 p-5 backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-white/25">
-      <div className="text-3xl font-bold text-white sm:text-4xl">{count.toLocaleString()}{suffix}</div>
-      <div className="mt-2 text-sm text-slate-300">{label}</div>
-    </div>
-  );
-}
-
-function MiniLineChart() {
-  return (
-    <div className="rounded-xl border border-white/15 bg-[#0b1423]/90 p-3">
-      <p className="text-xs text-slate-300">Department CGPA Trends</p>
-      <div className="mt-3 flex h-20 items-end gap-2">
-        {[36, 42, 40, 49, 54, 58, 62].map((h) => (
-          <div key={h} className="flex-1 rounded-t-md bg-gradient-to-t from-[#4cc9f0] to-[#7f5af0]" style={{ height: `${h}%` }} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function MiniRiskCards({ risks }) {
-  const data = [
-    { label: "High Risk", value: `${risks.high || 0}%`, color: "bg-[#ff595e]" },
-    { label: "Medium", value: `${risks.medium || 0}%`, color: "bg-[#ffca3a]" },
-    { label: "Low", value: `${risks.low || 0}%`, color: "bg-[#2ec4b6]" }
-  ];
-
-  return (
-    <div className="space-y-2 rounded-xl border border-white/15 bg-[#0b1423]/90 p-3">
-      <p className="text-xs text-slate-300">Student Risk Analysis</p>
-      {data.map((risk) => (
-        <div key={risk.label} className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2">
-          <div className="flex items-center gap-2">
-            <span className={`h-2.5 w-2.5 rounded-full ${risk.color}`} />
-            <span className="text-xs text-slate-200">{risk.label}</span>
-          </div>
-          <span className="text-xs font-semibold text-white">{risk.value}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function MiniPlacement({ rate }) {
-  return (
-    <div className="rounded-xl border border-white/15 bg-[#0b1423]/90 p-3">
-      <p className="text-xs text-slate-300">Placement Statistics</p>
-      <div className="mt-3 flex items-center gap-4">
-        <div className="relative h-16 w-16 rounded-full border-4 border-[#2ec4b6]/25">
-          <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#2ec4b6] border-r-[#2ec4b6]" />
-          <span className="absolute inset-0 grid place-items-center text-xs font-semibold">{rate}%</span>
-        </div>
+    <div className="relative rounded-2xl border border-white/10 bg-slate-950/60 p-5 shadow-[0_0_40px_rgba(6,182,212,0.12)] backdrop-blur-xl hover:border-white/15 transition duration-500 max-w-sm w-full mx-auto lg:mr-0">
+      <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
         <div>
-          <p className="text-sm font-semibold">Placement Success Rate</p>
-          <p className="text-xs text-slate-400">Across monitored departments</p>
+          <span className="text-[9px] font-bold uppercase tracking-wider text-cyan-400">Institutional Pulse</span>
+          <h4 className="text-xs font-semibold text-white">IQAC Live Metrics</h4>
+        </div>
+        <span className="flex h-2 w-2 relative">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+        </span>
+      </div>
+
+      <div className="flex items-center gap-5">
+        {/* Circular Progress Ring */}
+        <div className="relative h-20 w-20 flex items-center justify-center flex-shrink-0">
+          <svg className="absolute transform -rotate-90 w-full h-full" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="40" fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="6" />
+            <circle cx="50" cy="50" r="40" fill="transparent" stroke="url(#cyanGlowPulse)" strokeWidth="6" strokeDasharray={`${2 * Math.PI * 40}`} strokeDashoffset={`${2 * Math.PI * 40 * (1 - 0.78)}`} strokeLinecap="round" />
+            <defs>
+              <linearGradient id="cyanGlowPulse" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#22d3ee" />
+                <stop offset="100%" stopColor="#8b5cf6" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <div className="text-center">
+            <span className="text-lg font-bold text-white">78%</span>
+            <span className="text-[8px] block text-slate-400 tracking-wide uppercase">NAAC</span>
+          </div>
+        </div>
+
+        {/* Mini stats */}
+        <div className="space-y-1.5 flex-1">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-slate-400">Academic Health:</span>
+            <span className="font-semibold text-emerald-400 flex items-center gap-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Stable
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-slate-400">At-Risk Learners:</span>
+            <span className="font-semibold text-rose-400 flex items-center gap-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-rose-500" /> 42
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-slate-400">Evidence Pending:</span>
+            <span className="font-semibold text-amber-400 flex items-center gap-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" /> 18
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-slate-400">Next Audit Window:</span>
+            <span className="font-semibold text-cyan-400 flex items-center gap-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-cyan-500" /> 12 Days
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -137,218 +98,239 @@ function MiniPlacement({ rate }) {
 }
 
 export default function LandingPage() {
-  const [liveStats, setLiveStats] = useState(null);
+  const [phraseIndex, setPhraseIndex] = useState(0);
+  const [typedText, setTypedText] = useState("");
+  const [typingState, setTypingState] = useState("typing"); // typing, pauseTyping, deleting, pauseDeleting
 
+  // Typing animation loop with pauses
   useEffect(() => {
-    axios.get(`${API_BASE}/analytics/public-stats`)
-      .then(res => setLiveStats(res.data.data))
-      .catch(() => null);
-  }, []);
+    const fullText = rotatingPhrases[phraseIndex];
+    let timer;
 
-  const metrics = [
-    { label: "Students Analyzed", value: liveStats?.totalStudents || 0, suffix: "+" },
-    { label: "Faculty Insights", value: liveStats?.totalFaculties || 0, suffix: "" },
-    { label: "Departments Monitored", value: liveStats?.totalDepartments || 0, suffix: "" },
-    { label: "Automated Reports Generated", value: liveStats?.totalResearch || 0, suffix: "+" }
-  ];
+    if (typingState === "typing") {
+      if (typedText.length < fullText.length) {
+        timer = setTimeout(() => {
+          setTypedText(fullText.slice(0, typedText.length + 1));
+        }, 60);
+      } else {
+        setTypingState("pauseTyping");
+      }
+    } else if (typingState === "pauseTyping") {
+      timer = setTimeout(() => {
+        setTypingState("deleting");
+      }, 1800);
+    } else if (typingState === "deleting") {
+      if (typedText.length > 0) {
+        timer = setTimeout(() => {
+          setTypedText(fullText.slice(0, typedText.length - 1));
+        }, 30);
+      } else {
+        setTypingState("pauseDeleting");
+      }
+    } else if (typingState === "pauseDeleting") {
+      timer = setTimeout(() => {
+        setPhraseIndex((prev) => (prev + 1) % rotatingPhrases.length);
+        setTypingState("typing");
+      }, 300);
+    }
 
-  const riskPercent = liveStats?.riskDistribution || { high: 0, medium: 0, low: 0 };
-  const placementRate = liveStats?.placementRate || 0;
+    return () => clearTimeout(timer);
+  }, [typedText, phraseIndex, typingState]);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#050b16] text-white">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_10%_20%,rgba(76,201,240,0.15),transparent_35%),radial-gradient(circle_at_82%_12%,rgba(127,90,240,0.2),transparent_35%),radial-gradient(circle_at_70%_72%,rgba(31,191,117,0.14),transparent_35%)]" />
+    <div className="relative min-h-screen bg-[#040814] text-white overflow-x-hidden">
+      <CinematicBackground />
 
-      <main className="relative mx-auto max-w-7xl px-5 pb-16 pt-8 sm:px-8 lg:px-10">
-        <header className="flex items-center justify-between rounded-2xl border border-white/15 bg-white/5 px-5 py-4 backdrop-blur-xl">
-          <div>
-            <p className="text-xs uppercase tracking-[0.28em] text-slate-300">Academic Intelligence & Accreditation Monitoring Platform</p>
-            <h1 className="mt-1 font-heading text-xl sm:text-2xl">University AI Analytics Suite</h1>
+      <main className="relative z-10 mx-auto max-w-[1200px] px-4 pb-16 pt-4 sm:px-6">
+        {/* Navigation Bar */}
+        <header className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-900/40 px-5 py-3 shadow-[0_4px_30px_rgba(0,0,0,0.4)] backdrop-blur-xl">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-purple-500 font-black text-white text-sm shadow-[0_0_15px_rgba(6,182,212,0.5)]">
+              IQ
+            </div>
+            <div>
+              <h1 className="text-sm font-black tracking-wider text-white">IQAC Command Center</h1>
+              <p className="text-[9px] text-slate-400">AI-Powered Monitoring and Accreditation Dashboard</p>
+            </div>
           </div>
-          <Link to="/auth" className="rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium transition hover:bg-white/20">
-            Admin Login
+          <Link to="/auth" className="rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-1.5 text-xs font-semibold text-cyan-300 shadow-[0_0_15px_rgba(34,211,238,0.2)] transition hover:bg-cyan-400/20 hover:scale-[1.02]">
+            Open Portal
           </Link>
         </header>
 
-        <section className="mt-12 grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
-          <div>
-            <p className="inline-flex rounded-full border border-[#4cc9f0]/40 bg-[#4cc9f0]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#7ed7ff]">
-              AI Analytics For Higher Education
-            </p>
-            <h2 className="mt-5 max-w-2xl font-heading text-4xl leading-tight sm:text-5xl">
-              AI-Powered Academic Intelligence for Universities
+        {/* Hero Section */}
+        <section className="mt-8 grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-center min-h-[58vh]">
+          <div className="space-y-4">
+            <span className="inline-flex rounded-full border border-cyan-400/30 bg-cyan-400/5 px-3 py-1 text-[9px] font-bold uppercase tracking-[0.22em] text-cyan-400">
+              Future Ready University Intelligence
+            </span>
+            <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-black leading-tight text-white">
+              AI-Powered <span className="bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">IQAC Command Center</span>
             </h2>
-            <p className="mt-4 max-w-2xl text-base text-slate-300 sm:text-lg">
-              Monitor student performance, department outcomes, and accreditation readiness in one intelligent platform.
+            <div className="min-h-8 text-cyan-300 text-base sm:text-lg flex items-center font-semibold">
+              <span>{typedText}</span>
+              <span className="ml-1 inline-block h-5 w-[1.5px] animate-pulse bg-cyan-400 align-middle" />
+            </div>
+            <p className="max-w-2xl text-xs sm:text-sm text-slate-300 leading-relaxed font-medium">
+              A cinematic academic intelligence layer for student risk, faculty contribution, department KPIs, accreditation evidence, and NAAC/NBA-ready reports.
             </p>
 
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link to="/auth" className="rounded-xl bg-gradient-to-r from-[#4cc9f0] to-[#7f5af0] px-6 py-3 text-sm font-semibold text-[#04101f] shadow-lg shadow-[#7f5af0]/30 transition hover:translate-y-[-1px]">
-                Live Demo
+            <div className="flex flex-wrap gap-3 pt-2">
+              <Link to="/auth" className="rounded-xl bg-gradient-to-r from-cyan-500 to-purple-500 px-6 py-2.5 text-xs font-bold text-[#04101f] shadow-lg shadow-cyan-500/20 transition hover:translate-y-[-1px] hover:shadow-cyan-500/30">
+                Enter Command Center
               </Link>
-              <Link to="/auth" className="rounded-xl border border-white/20 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/20">
-                Login / Signup
-              </Link>
+              <a href="#timeline" className="rounded-xl border border-white/10 bg-white/5 px-6 py-2.5 text-xs font-bold text-slate-200 transition hover:bg-white/10 hover:border-white/15">
+                View Accreditation Map
+              </a>
             </div>
           </div>
 
           <div className="relative">
-            <div className="absolute -left-10 -top-6 h-32 w-32 rounded-full bg-[#4cc9f0]/30 blur-3xl" />
-            <div className="absolute -bottom-8 right-0 h-36 w-36 rounded-full bg-[#7f5af0]/30 blur-3xl" />
-            <div className="relative rounded-3xl border border-white/20 bg-white/10 p-4 backdrop-blur-2xl">
-              <div className="mb-3 flex items-center justify-between">
-                <p className="text-sm font-semibold">Floating Dashboard Preview</p>
-                <span className="rounded-full bg-[#2ec4b6]/20 px-2 py-1 text-[10px] font-semibold uppercase text-[#87f6e2]">Live AI</span>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <MiniRiskCards risks={riskPercent} />
-                <MiniLineChart />
-                <div className="sm:col-span-2">
-                  <MiniPlacement rate={placementRate} />
-                </div>
-              </div>
-            </div>
+            <MiniLivePulsePanel />
           </div>
         </section>
 
-        <section className="mt-14">
-          <h3 className="text-sm uppercase tracking-[0.22em] text-slate-300">University Impact Metrics</h3>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {metrics.map((metric) => (
-              <CounterCard key={metric.label} label={metric.label} value={metric.value} suffix={metric.suffix} />
-            ))}
-          </div>
-        </section>
-
-        <section className="mt-14">
-          <h3 className="text-sm uppercase tracking-[0.22em] text-slate-300">Platform Intelligence Modules</h3>
-          <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {MODULES.map((item, idx) => (
-              <article
-                key={item.title}
-                className="group rounded-2xl border border-white/15 bg-white/5 p-5 backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-white/25"
-                style={{ animationDelay: `${idx * 80}ms` }}
+        {/* Section 1: Academic Health Pulse */}
+        <section className="mt-12 space-y-4">
+          <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Academic Health Pulse</h3>
+          <div className="grid gap-4 md:grid-cols-3">
+            {[
+              {
+                title: "Student Risk",
+                value: "42",
+                desc: "Learners flagged for immediate mentor intervention",
+                color: "border-rose-500/20 shadow-[0_0_20px_rgba(244,63,94,0.06)] hover:border-rose-500/35",
+                valColor: "text-rose-400",
+                icon: Icons.Risk
+              },
+              {
+                title: "Faculty Contribution",
+                value: "126",
+                desc: "Research publications and FDP outcomes registered",
+                color: "border-cyan-500/20 shadow-[0_0_20px_rgba(6,182,212,0.06)] hover:border-cyan-500/35",
+                valColor: "text-cyan-400",
+                icon: Icons.Faculty
+              },
+              {
+                title: "Department Quality",
+                value: "7",
+                desc: "Departments benchmarked across quality index parameters",
+                color: "border-purple-500/20 shadow-[0_0_20px_rgba(168,85,247,0.06)] hover:border-purple-500/35",
+                valColor: "text-purple-400",
+                icon: Icons.Department
+              }
+            ].map((card) => (
+              <div
+                key={card.title}
+                className={`rounded-2xl border bg-slate-900/40 p-5 backdrop-blur-xl transition duration-300 hover:scale-[1.01] ${card.color}`}
               >
-                <div className={`mb-3 h-1.5 w-24 rounded-full bg-gradient-to-r ${item.tone}`} />
-                <h4 className="font-heading text-xl">{item.title}</h4>
-                <p className="mt-2 text-sm text-slate-300">{item.desc}</p>
-              </article>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-300">{card.title}</span>
+                  <card.icon />
+                </div>
+                <div className="mt-3 flex items-baseline gap-2">
+                  <span className={`text-3xl font-black ${card.valColor}`}>{card.value}</span>
+                </div>
+                <p className="text-xs text-slate-400 mt-2 leading-relaxed">{card.desc}</p>
+              </div>
             ))}
           </div>
         </section>
 
-        <section className="mt-14 rounded-3xl border border-white/15 bg-white/5 p-6 backdrop-blur-xl sm:p-8">
-          <h3 className="font-heading text-2xl">Interactive Dashboard Preview</h3>
-          <p className="mt-2 text-sm text-slate-300">A real-time command center for administrators and department leaders.</p>
-          <div className="mt-6 grid gap-4 lg:grid-cols-2">
-            <div className="rounded-2xl border border-white/15 bg-[#0b1423]/90 p-4">
-              <p className="text-sm font-medium text-slate-200">CGPA Trend Chart</p>
-              <div className="mt-4 flex h-36 items-end gap-2">
-                {[42, 48, 52, 57, 61, 64, 68, 72].map((h) => (
-                  <div key={h} className="flex-1 rounded-t-md bg-gradient-to-t from-[#4cc9f0] to-[#7f5af0]" style={{ height: `${h}%` }} />
-                ))}
-              </div>
-            </div>
+        {/* Section 2: Accreditation Readiness Timeline */}
+        <section id="timeline" className="mt-12 space-y-4">
+          <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Accreditation Readiness Timeline</h3>
+          <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl shadow-lg relative overflow-hidden">
+            {/* Horizontal line for desktop */}
+            <div className="absolute top-12 left-8 right-8 hidden md:block h-0.5 bg-white/10" />
 
-            <div className="rounded-2xl border border-white/15 bg-[#0b1423]/90 p-4">
-              <p className="text-sm font-medium text-slate-200">Attendance Distribution</p>
-              <div className="mt-4 space-y-3">
-                {[
-                  ["Above 85%", 62, "#2ec4b6"],
-                  ["75% - 85%", 24, "#ffd166"],
-                  ["Below 75%", 14, "#ef476f"]
-                ].map(([name, val, color]) => (
-                  <div key={name}>
-                    <div className="mb-1 flex justify-between text-xs text-slate-300">
-                      <span>{name}</span>
-                      <span>{val}%</span>
+            <div className="grid gap-6 md:grid-cols-5 relative z-10">
+              {[
+                { name: "Evidence Collection", desc: "Syllabi, logs, and course outcomes collected.", status: "completed", color: "text-emerald-400", border: "border-emerald-500" },
+                { name: "Department Verification", desc: "Data verified by HODs and departmental leads.", status: "completed", color: "text-emerald-400", border: "border-emerald-500" },
+                { name: "NAAC/NBA Mapping", desc: "Criteria mapping and gap analysis by IQAC cell.", status: "current", color: "text-cyan-400", border: "border-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.4)]" },
+                { name: "IQAC Review", desc: "Final verification and approval by IQAC committee.", status: "pending", color: "text-amber-400", border: "border-amber-500" },
+                { name: "Report Export", desc: "Generating formatted PDF & Excel audit files.", status: "pending", color: "text-slate-500", border: "border-slate-600" }
+              ].map((step, idx) => (
+                <div key={step.name} className="flex flex-col items-center md:items-start text-center md:text-left">
+                  <div className="flex items-center gap-3 md:flex-col md:items-start">
+                    <div className={`h-7 w-7 rounded-full flex items-center justify-center font-black text-xs bg-slate-950 border-2 ${step.border} mb-2`}>
+                      {idx + 1}
                     </div>
-                    <div className="h-2 rounded-full bg-white/10">
-                      <div className="h-2 rounded-full" style={{ width: `${val}%`, backgroundColor: color }} />
-                    </div>
+                    <h4 className={`text-xs font-bold ${step.color}`}>{step.name}</h4>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-white/15 bg-[#0b1423]/90 p-4">
-              <p className="text-sm font-medium text-slate-200">Section Comparison</p>
-              <div className="mt-4 grid grid-cols-4 gap-3 text-center text-xs text-slate-300">
-                {["A", "B", "C", "D"].map((section, idx) => (
-                  <div key={section}>
-                    <div className="mx-auto mb-2 h-16 w-8 rounded-md bg-white/10 p-1">
-                      <div
-                        className="w-full rounded-sm bg-gradient-to-t from-[#1fbf75] to-[#7df5a8]"
-                        style={{ height: `${[62, 74, 58, 81][idx]}%`, marginTop: "auto" }}
-                      />
-                    </div>
-                    <p>Sec {section}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-white/15 bg-[#0b1423]/90 p-4">
-              <p className="text-sm font-medium text-slate-200">Placement Success Rate</p>
-              <div className="mt-5 flex items-center gap-5">
-                <div className="relative h-24 w-24 rounded-full border-[10px] border-[#2ec4b6]/20">
-                  <div className="absolute inset-0 rounded-full border-[10px] border-transparent border-r-[#2ec4b6] border-t-[#2ec4b6]" />
-                  <span className="absolute inset-0 grid place-items-center text-lg font-bold">{placementRate}%</span>
+                  <p className="text-[11px] text-slate-400 mt-1 md:mt-2 px-2 md:px-0 leading-relaxed font-medium">{step.desc}</p>
                 </div>
-                <div className="text-sm text-slate-300">
-                  <p className="font-semibold text-white">Placement season active</p>
-                  <p>Top recruiters and package analytics updated live.</p>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </section>
 
-        <section className="mt-14">
-          <h3 className="text-sm uppercase tracking-[0.22em] text-slate-300">Platform Workflow</h3>
-          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {WORKFLOW.map((step, index) => (
-              <div key={step} className="relative rounded-2xl border border-white/15 bg-white/5 p-5 backdrop-blur-xl">
-                <div className="mb-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-[#4cc9f0] to-[#7f5af0] text-sm font-bold text-[#04111e]">
-                  {index + 1}
+        {/* Section 3: Compliance AI Recommendations */}
+        <section className="mt-12 space-y-4">
+          <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Compliance AI Recommendations</h3>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { text: "CSE needs 6 pending NBA evidence files before Friday.", severity: "Critical", color: "border-red-500/20 text-red-400 bg-red-500/5 shadow-[0_0_15px_rgba(239,68,68,0.04)]" },
+              { text: "42 students require mentor intervention due to low attendance.", severity: "Action", color: "border-amber-500/20 text-amber-400 bg-amber-500/5 shadow-[0_0_15px_rgba(245,158,11,0.04)]" },
+              { text: "ECE placement trend dropped by 8% compared to last cycle.", severity: "Insight", color: "border-cyan-500/20 text-cyan-400 bg-cyan-500/5 shadow-[0_0_15px_rgba(6,182,212,0.04)]" },
+              { text: "Faculty publication contribution improved by 14% this semester.", severity: "Positive", color: "border-emerald-500/20 text-emerald-400 bg-emerald-500/5 shadow-[0_0_15px_rgba(16,185,129,0.04)]" }
+            ].map((rec) => (
+              <div key={rec.text} className={`rounded-2xl border p-4.5 backdrop-blur-xl flex flex-col justify-between hover:scale-[1.01] transition duration-300 ${rec.color}`}>
+                <div className="mb-3">
+                  <span className="rounded-full bg-white/5 border border-white/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+                    {rec.severity}
+                  </span>
                 </div>
-                <p className="text-sm text-slate-200">{step}</p>
+                <p className="text-xs text-slate-200 leading-relaxed font-medium">{rec.text}</p>
               </div>
             ))}
           </div>
         </section>
 
-        <section className="mt-14 rounded-3xl border border-white/15 bg-white/5 p-6 backdrop-blur-xl sm:p-8">
-          <h3 className="font-heading text-2xl">Key Capabilities</h3>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {CAPABILITIES.map((capability) => (
-              <div key={capability} className="rounded-xl border border-white/15 bg-[#0b1423]/80 px-4 py-3 text-sm text-slate-200">
-                {capability}
+        {/* Section 4: Role-Based Command Centers */}
+        <section className="mt-12 space-y-4">
+          <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Role-Based Command Centers</h3>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { role: "Admin", desc: "Institutional analytics, multi-department reports, global settings, and NBA/NAAC accreditation dashboard control." },
+              { role: "HOD", desc: "Department-scoped KPIs, section drift tracking, faculty load mapping, and student risk oversight." },
+              { role: "Faculty", desc: "Student attendance and marks entry, personal research publications upload, and direct mentor-mentee actions." },
+              { role: "Student", desc: "CGPA trend monitoring, subject-wise attendance logs, risk alert notifications, and extra-curricular achievements upload." }
+            ].map((rc) => (
+              <div key={rc.role} className="rounded-2xl border border-white/10 bg-slate-900/35 p-5 backdrop-blur-xl hover:border-white/15 transition duration-300">
+                <span className="text-[9px] font-bold uppercase tracking-widest text-cyan-400 block mb-2">{rc.role} Workspace</span>
+                <h4 className="text-sm font-bold text-white mb-2">{rc.role} Command</h4>
+                <p className="text-xs text-slate-400 leading-relaxed font-medium">{rc.desc}</p>
               </div>
             ))}
           </div>
         </section>
 
-        <section className="mt-14 rounded-3xl border border-[#4cc9f0]/25 bg-gradient-to-r from-[#0b1423] via-[#111a2e] to-[#120f2c] p-8 text-center">
-          <h3 className="font-heading text-3xl">Experience Academic Intelligence in Action</h3>
-          <p className="mx-auto mt-3 max-w-2xl text-slate-300">
-            Explore intelligent insights, accreditation readiness dashboards, and AI-powered recommendations tailored for higher education institutions.
+        {/* Final CTA */}
+        <section className="mt-14 rounded-3xl border border-cyan-400/20 bg-gradient-to-r from-slate-950 via-[#0a1122] to-slate-950 p-8 text-center shadow-[0_0_36px_rgba(6,182,212,0.1)] backdrop-blur-xl">
+          <h3 className="font-heading text-2xl sm:text-3xl font-black text-white">Ready for the IQAC Review?</h3>
+          <p className="mx-auto mt-3 max-w-xl text-xs sm:text-sm text-slate-300 leading-relaxed font-medium">
+            Generate accreditation-ready reports and monitor academic health from a single command center.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <Link to="/auth" className="rounded-xl bg-gradient-to-r from-[#4cc9f0] to-[#2ec4b6] px-6 py-3 text-sm font-semibold text-[#04111f] transition hover:translate-y-[-1px]">
-              Start Demo
+            <Link to="/auth" className="rounded-xl bg-gradient-to-r from-cyan-400 to-purple-500 px-6 py-2.5 text-xs font-bold text-[#04111f] transition hover:translate-y-[-1px]">
+              Open Admin Dashboard
             </Link>
-            <Link to="/auth" className="rounded-xl border border-white/20 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/20">
-              View Analytics
+            <Link to="/auth" className="rounded-xl border border-white/10 bg-white/5 px-6 py-2.5 text-xs font-bold text-slate-300 transition hover:bg-white/10">
+              Generate Demo Report
             </Link>
           </div>
         </section>
 
-        <footer className="mt-14 grid gap-4 rounded-2xl border border-white/15 bg-white/5 p-5 text-sm text-slate-300 backdrop-blur-xl sm:grid-cols-2 lg:grid-cols-4">
-          <a href="#" className="transition hover:text-white">About Platform</a>
-          <a href="#" className="transition hover:text-white">Features</a>
-          <a href="#" className="transition hover:text-white">Documentation</a>
-          <Link to="/auth" className="transition hover:text-white">Admin Login</Link>
+        {/* Footer */}
+        <footer className="mt-12 flex flex-col sm:flex-row items-center justify-between border-t border-white/10 pt-6 text-[10px] text-slate-500 font-semibold uppercase tracking-wider">
+          <p>© {new Date().getFullYear()} IQAC Command Center. All Rights Reserved.</p>
+          <div className="flex gap-4 mt-3 sm:mt-0">
+            <a href="#" className="hover:text-slate-300 transition">About</a>
+            <a href="#" className="hover:text-slate-300 transition">Compliance Map</a>
+            <a href="#" className="hover:text-slate-300 transition">API Documentation</a>
+          </div>
         </footer>
       </main>
     </div>
