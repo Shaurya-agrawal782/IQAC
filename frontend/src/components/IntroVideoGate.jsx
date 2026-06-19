@@ -52,6 +52,31 @@ export default function IntroVideoGate({ children }) {
     };
   }, []);
 
+  useEffect(() => {
+    let animationFrameId;
+
+    const updateProgress = () => {
+      if (videoRef.current) {
+        const video = videoRef.current;
+        if (video.duration) {
+          const progress = (video.currentTime / video.duration) * 100;
+          setProgressWidth(progress || 0);
+        }
+      }
+      animationFrameId = requestAnimationFrame(updateProgress);
+    };
+
+    if (isMounted && !isFadingOut) {
+      animationFrameId = requestAnimationFrame(updateProgress);
+    }
+
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [isMounted, isFadingOut]);
+
   const handleSkip = () => {
     if (fadeTimeoutRef.current) clearTimeout(fadeTimeoutRef.current);
     if (animTimeoutRef.current) clearTimeout(animTimeoutRef.current);
@@ -70,9 +95,6 @@ export default function IntroVideoGate({ children }) {
   const handleTimeUpdate = () => {
     if (videoRef.current) {
       const video = videoRef.current;
-      const progress = (video.currentTime / video.duration) * 100;
-      setProgressWidth(progress || 0);
-
       const time = video.currentTime;
       const duration = video.duration;
       
@@ -212,7 +234,7 @@ export default function IntroVideoGate({ children }) {
           {/* Subtle Thin Progress Bar (2px, cyan-to-purple gradient with soft glow) */}
           <div className="relative z-10 h-[2px] w-full bg-white/5">
             <div
-              className="h-full bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 shadow-[0_0_10px_rgba(34,211,238,0.8)] transition-all duration-100 ease-out"
+              className="h-full bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 shadow-[0_0_10px_rgba(34,211,238,0.8)]"
               style={{ width: `${progressWidth}%` }}
             />
           </div>
