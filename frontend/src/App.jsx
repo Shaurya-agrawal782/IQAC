@@ -10,6 +10,7 @@ import HodDashboard from "./pages/HodDashboard.jsx";
 import FacultyDashboard from "./pages/FacultyDashboard.jsx";
 import StudentDashboard from "./pages/StudentDashboard.jsx";
 import NotFoundPage from "./pages/NotFoundPage.jsx";
+import IntroVideoGate from "./components/IntroVideoGate.jsx";
 
 const HomeRedirect = () => {
   const { user } = useAuth();
@@ -21,7 +22,7 @@ const HomeRedirect = () => {
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<LandingPage />} />
+      <Route path="/" element={<IntroVideoGate><LandingPage /></IntroVideoGate>} />
       <Route path="/start" element={<HomeRedirect />} />
       <Route path="/auth" element={<LoginPage />} />
 
@@ -30,7 +31,9 @@ export default function App() {
         element={
           <ProtectedRoute allowedRoles={["admin", "hod", "faculty", "student"]}>
             <AppLayout>
-              <HomePage />
+              <IntroVideoGate>
+                <HomePage />
+              </IntroVideoGate>
             </AppLayout>
           </ProtectedRoute>
         }

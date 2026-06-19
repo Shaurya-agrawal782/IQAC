@@ -100,7 +100,13 @@ Run backend:
 npm run dev
 ```
 
-Seed demo data:
+Seed realistic Indian demo data (Recommended):
+
+```bash
+npm run seed:realistic
+```
+
+Or seed basic demo data:
 
 ```bash
 npm run seed
@@ -118,19 +124,20 @@ Create `.env` using `.env.example` as template.
 
 Frontend runs on `http://localhost:5173`.
 
-## Demo Credentials (after seed)
+## Demo Credentials (after seeding)
 
-Password for all:
+All demo accounts use privacy-safe, synthetically generated Indian institutional data. 
 
+**Password for all accounts:**
 ```text
 Admin@123
 ```
 
-Users:
-- Admin: `admin@iqac.edu`
-- HOD: `hod.cse@iqac.edu`
-- Faculty: `faculty.cse@iqac.edu`
-- Student: `ravi@student.iqac.edu`
+**Guaranteed Test Accounts:**
+- **Admin**: `admin@iqac.edu`
+- **HOD**: `hod.cse@iqac.edu`
+- **Faculty**: `faculty.cse@iqac.edu`
+- **Student**: `ravi@student.iqac.edu`
 
 ## Key API Endpoints
 
