@@ -1,11 +1,14 @@
 import { useState } from "react";
 import client from "../api/client";
+import { motion, useReducedMotion } from "framer-motion";
+import { fadeIn } from "../animations/motionPresets.js";
 
 export default function NlqSearchBar({ departmentId }) {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [answer, setAnswer] = useState("");
   const [error, setError] = useState("");
+  const shouldReduceMotion = useReducedMotion();
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -29,7 +32,12 @@ export default function NlqSearchBar({ departmentId }) {
   };
 
   return (
-    <div className="mb-6 overflow-hidden rounded-2xl border border-brand-ocean/30 bg-white/60 shadow-lg backdrop-blur-md transition-all hover:bg-white/80 hover:shadow-xl">
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={fadeIn}
+      className="mb-6 overflow-hidden rounded-2xl border border-brand-ocean/30 bg-white/60 shadow-lg backdrop-blur-md transition-all hover:bg-white/80 hover:shadow-xl"
+    >
       <form onSubmit={handleSearch} className="flex items-center gap-3 p-2 px-3">
         <div className="flex flex-1 items-center gap-3 rounded-xl bg-white/70 px-4 py-3 shadow-inner ring-1 ring-brand-ink/5 focus-within:ring-2 focus-within:ring-brand-ocean/50">
           <svg className="h-5 w-5 text-brand-ocean/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -81,6 +89,6 @@ export default function NlqSearchBar({ departmentId }) {
           )}
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

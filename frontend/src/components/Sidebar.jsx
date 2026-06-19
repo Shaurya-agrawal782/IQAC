@@ -1,3 +1,5 @@
+import { motion } from "framer-motion";
+
 const ICONS = {
   Overview: (
     <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
@@ -48,13 +50,20 @@ export default function Sidebar({ items, activeItem, onSelect }) {
             <button
               key={item}
               onClick={() => onSelect(item)}
-              className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-medium transition-all duration-200 ${active
-                  ? "bg-gradient-to-r from-brand-ink to-brand-ocean text-white shadow-md"
+              className={`relative group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-medium transition-all duration-200 ${active
+                  ? "text-white"
                   : "text-brand-ink/80 hover:bg-white hover:text-brand-ink"
                 }`}
             >
-              <span className={`transition ${active ? "text-white" : "text-brand-ocean group-hover:text-brand-ink"}`}>{ICONS[item]}</span>
-              <span>{item}</span>
+              {active && (
+                <motion.div
+                  layoutId="active-sidebar-bg"
+                  className="absolute inset-0 bg-gradient-to-r from-brand-ink to-brand-ocean rounded-xl z-0 shadow-md"
+                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                />
+              )}
+              <span className={`relative z-10 transition ${active ? "text-white" : "text-brand-ocean group-hover:text-brand-ink"}`}>{ICONS[item]}</span>
+              <span className="relative z-10">{item}</span>
             </button>
           );
         })}

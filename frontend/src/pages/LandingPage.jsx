@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import BackgroundVideo from "../components/BackgroundVideo.jsx";
+import { motion, useReducedMotion } from "framer-motion";
+import { fadeIn, fadeUp, scaleFade, staggerContainer, getCardHoverProps } from "../animations/motionPresets.js";
+
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
@@ -100,6 +103,7 @@ function MiniLivePulsePanel() {
 export default function LandingPage() {
   const [phraseIndex, setPhraseIndex] = useState(0);
   const [fadeState, setFadeState] = useState("fade-in");
+  const shouldReduceMotion = useReducedMotion();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -119,7 +123,12 @@ export default function LandingPage() {
 
       <main className="relative z-10 mx-auto max-w-[1200px] px-4 pb-16 pt-4 sm:px-6">
         {/* Navigation Bar */}
-        <header className="flex items-center justify-between rounded-2xl border border-cyan-500/10 hover:border-purple-500/20 bg-slate-950/50 px-5 py-3 shadow-[0_4px_30px_rgba(0,0,0,0.4)] backdrop-blur-md relative z-20">
+        <motion.header
+          initial={{ opacity: 0, y: shouldReduceMotion ? 0 : -16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="flex items-center justify-between rounded-2xl border border-cyan-500/10 hover:border-purple-500/20 bg-slate-950/50 px-5 py-3 shadow-[0_4px_30px_rgba(0,0,0,0.4)] backdrop-blur-md relative z-20"
+        >
           <div className="flex items-center gap-3">
             <div className="relative flex h-9 w-9 items-center justify-center">
               <svg className="h-8 w-8" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -160,43 +169,79 @@ export default function LandingPage() {
           <Link to="/auth" className="rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-1.5 text-xs font-semibold text-cyan-300 shadow-[0_0_15px_rgba(34,211,238,0.2)] transition hover:bg-cyan-400/20 hover:scale-[1.02]">
             Open Portal
           </Link>
-        </header>
+        </motion.header>
 
         {/* Hero Section */}
-        <section className="mt-8 grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-center min-h-[58vh]">
+        <motion.section 
+          initial="hidden"
+          animate="visible"
+          variants={staggerContainer}
+          className="mt-8 grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-center min-h-[58vh]"
+        >
           <div className="space-y-4">
-            <span className="inline-flex rounded-full border border-cyan-400/30 bg-cyan-400/5 px-3 py-1 text-[9px] font-bold uppercase tracking-[0.22em] text-cyan-400">
+            <motion.span 
+              variants={fadeIn}
+              className="inline-flex rounded-full border border-cyan-400/30 bg-cyan-400/5 px-3 py-1 text-[9px] font-bold uppercase tracking-[0.22em] text-cyan-400"
+            >
               FUTURE READY UNIVERSITY INTELLIGENCE
-            </span>
-            <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-black leading-tight text-white">
+            </motion.span>
+            <motion.h2 
+              variants={fadeUp}
+              custom={shouldReduceMotion}
+              className="font-heading text-3xl sm:text-4xl lg:text-5xl font-black leading-tight text-white"
+            >
               AI-Powered <span className="bg-gradient-to-r from-cyan-400 via-blue-100 to-purple-400 bg-clip-text text-transparent">IQAC Command Center</span>
-            </h2>
-            <div className="min-h-8 text-cyan-300 text-sm sm:text-base flex items-center font-semibold">
+            </motion.h2>
+            <motion.div 
+              variants={fadeIn}
+              className="min-h-8 text-cyan-300 text-sm sm:text-base flex items-center font-semibold"
+            >
               <span className={`transition-opacity duration-500 ease-in-out ${fadeState === "fade-in" ? "opacity-100" : "opacity-0"}`}>
                 Monitoring {rotatingPhrases[phraseIndex]}
               </span>
-            </div>
-            <p className="max-w-2xl text-xs sm:text-sm text-slate-300 leading-relaxed font-medium">
+            </motion.div>
+            <motion.p 
+              variants={fadeUp}
+              custom={shouldReduceMotion}
+              className="max-w-2xl text-xs sm:text-sm text-slate-300 leading-relaxed font-medium"
+            >
               Monitor student risk, faculty contribution, department KPIs, accreditation evidence, and NAAC/NBA-ready reports from one intelligent dashboard.
-            </p>
+            </motion.p>
 
-            <div className="flex flex-wrap gap-3 pt-2">
-              <Link to="/auth" className="rounded-xl bg-gradient-to-r from-cyan-500 to-purple-500 px-6 py-2.5 text-xs font-bold text-[#04101f] shadow-lg shadow-cyan-500/20 transition hover:translate-y-[-1px] hover:shadow-cyan-500/30">
-                Enter Command Center
-              </Link>
-              <a href="#timeline" className="rounded-xl border border-white/10 bg-white/5 px-6 py-2.5 text-xs font-bold text-slate-200 transition hover:bg-white/10 hover:border-white/15">
-                View Accreditation Map
-              </a>
-            </div>
+            <motion.div 
+              variants={staggerContainer}
+              className="flex flex-wrap gap-3 pt-2"
+            >
+              <motion.div variants={fadeUp} custom={shouldReduceMotion}>
+                <Link to="/auth" className="rounded-xl bg-gradient-to-r from-cyan-500 to-purple-500 px-6 py-2.5 text-xs font-bold text-[#04101f] shadow-lg shadow-cyan-500/20 transition hover:translate-y-[-1px] hover:shadow-cyan-500/30 block">
+                  Enter Command Center
+                </Link>
+              </motion.div>
+              <motion.div variants={fadeUp} custom={shouldReduceMotion}>
+                <a href="#timeline" className="rounded-xl border border-white/10 bg-white/5 px-6 py-2.5 text-xs font-bold text-slate-200 transition hover:bg-white/10 hover:border-white/15 block">
+                  View Accreditation Map
+                </a>
+              </motion.div>
+            </motion.div>
           </div>
 
-          <div className="relative">
+          <motion.div 
+            variants={scaleFade}
+            custom={shouldReduceMotion}
+            className="relative"
+          >
             <MiniLivePulsePanel />
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
 
         {/* Section 1: Academic Health Pulse */}
-        <section className="mt-12 space-y-4">
+        <motion.section 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={staggerContainer}
+          className="mt-12 space-y-4"
+        >
           <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Academic Health Pulse</h3>
           <div className="grid gap-4 md:grid-cols-3">
             {[
@@ -225,9 +270,12 @@ export default function LandingPage() {
                 icon: Icons.Department
               }
             ].map((card) => (
-              <div
+              <motion.div
                 key={card.title}
-                className={`rounded-2xl border bg-slate-900/40 p-5 backdrop-blur-xl transition duration-300 hover:scale-[1.01] ${card.color}`}
+                variants={fadeUp}
+                custom={shouldReduceMotion}
+                {...getCardHoverProps(shouldReduceMotion)}
+                className={`rounded-2xl border bg-slate-900/40 p-5 backdrop-blur-xl ${card.color}`}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-slate-300">{card.title}</span>
@@ -237,15 +285,25 @@ export default function LandingPage() {
                   <span className={`text-3xl font-black ${card.valColor}`}>{card.value}</span>
                 </div>
                 <p className="text-xs text-slate-400 mt-2 leading-relaxed">{card.desc}</p>
-              </div>
+              </motion.div>
             ))}
           </div>
-        </section>
+        </motion.section>
 
         {/* Section 2: Accreditation Readiness Timeline */}
-        <section id="timeline" className="mt-12 space-y-4">
+        <motion.section 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={staggerContainer}
+          id="timeline" 
+          className="mt-12 space-y-4"
+        >
           <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Accreditation Readiness Timeline</h3>
-          <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl shadow-lg relative overflow-hidden">
+          <motion.div 
+            variants={fadeIn}
+            className="rounded-2xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl shadow-lg relative overflow-hidden"
+          >
             {/* Horizontal line for desktop */}
             <div className="absolute top-12 left-8 right-8 hidden md:block h-0.5 bg-white/10" />
 
@@ -257,7 +315,12 @@ export default function LandingPage() {
                 { name: "IQAC Review", desc: "Final verification and approval by IQAC committee.", status: "pending", color: "text-amber-400", border: "border-amber-500" },
                 { name: "Report Export", desc: "Generating formatted PDF & Excel audit files.", status: "pending", color: "text-slate-500", border: "border-slate-600" }
               ].map((step, idx) => (
-                <div key={step.name} className="flex flex-col items-center md:items-start text-center md:text-left">
+                <motion.div 
+                  key={step.name} 
+                  variants={fadeUp}
+                  custom={shouldReduceMotion}
+                  className="flex flex-col items-center md:items-start text-center md:text-left"
+                >
                   <div className="flex items-center gap-3 md:flex-col md:items-start">
                     <div className={`h-7 w-7 rounded-full flex items-center justify-center font-black text-xs bg-slate-950 border-2 ${step.border} mb-2`}>
                       {idx + 1}
@@ -265,14 +328,20 @@ export default function LandingPage() {
                     <h4 className={`text-xs font-bold ${step.color}`}>{step.name}</h4>
                   </div>
                   <p className="text-[11px] text-slate-400 mt-1 md:mt-2 px-2 md:px-0 leading-relaxed font-medium">{step.desc}</p>
-                </div>
+                </motion.div>
               ))}
             </div>
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
 
         {/* Section 3: Compliance AI Recommendations */}
-        <section className="mt-12 space-y-4">
+        <motion.section 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={staggerContainer}
+          className="mt-12 space-y-4"
+        >
           <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Compliance AI Recommendations</h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
@@ -281,20 +350,32 @@ export default function LandingPage() {
               { text: "ECE placement trend dropped by 8% compared to last cycle.", severity: "Insight", color: "border-cyan-500/20 text-cyan-400 bg-cyan-500/5 shadow-[0_0_15px_rgba(6,182,212,0.04)]" },
               { text: "Faculty publication contribution improved by 14% this semester.", severity: "Positive", color: "border-emerald-500/20 text-emerald-400 bg-emerald-500/5 shadow-[0_0_15px_rgba(16,185,129,0.04)]" }
             ].map((rec) => (
-              <div key={rec.text} className={`rounded-2xl border p-4.5 backdrop-blur-xl flex flex-col justify-between hover:scale-[1.01] transition duration-300 ${rec.color}`}>
+              <motion.div 
+                key={rec.text} 
+                variants={fadeUp}
+                custom={shouldReduceMotion}
+                {...getCardHoverProps(shouldReduceMotion)}
+                className={`rounded-2xl border p-4.5 backdrop-blur-xl flex flex-col justify-between ${rec.color}`}
+              >
                 <div className="mb-3">
                   <span className="rounded-full bg-white/5 border border-white/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">
                     {rec.severity}
                   </span>
                 </div>
                 <p className="text-xs text-slate-200 leading-relaxed font-medium">{rec.text}</p>
-              </div>
+              </motion.div>
             ))}
           </div>
-        </section>
+        </motion.section>
 
         {/* Section 4: Role-Based Command Centers */}
-        <section className="mt-12 space-y-4">
+        <motion.section 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={staggerContainer}
+          className="mt-12 space-y-4"
+        >
           <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Role-Based Command Centers</h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
@@ -303,30 +384,42 @@ export default function LandingPage() {
               { role: "Faculty", desc: "Student attendance and marks entry, personal research publications upload, and direct mentor-mentee actions." },
               { role: "Student", desc: "CGPA trend monitoring, subject-wise attendance logs, risk alert notifications, and extra-curricular achievements upload." }
             ].map((rc) => (
-              <div key={rc.role} className="rounded-2xl border border-white/10 bg-slate-900/35 p-5 backdrop-blur-xl hover:border-white/15 transition duration-300">
+              <motion.div 
+                key={rc.role} 
+                variants={fadeUp}
+                custom={shouldReduceMotion}
+                {...getCardHoverProps(shouldReduceMotion)}
+                className="rounded-2xl border border-white/10 bg-slate-900/35 p-5 backdrop-blur-xl hover:border-white/15"
+              >
                 <span className="text-[9px] font-bold uppercase tracking-widest text-cyan-400 block mb-2">{rc.role} Workspace</span>
                 <h4 className="text-sm font-bold text-white mb-2">{rc.role} Command</h4>
                 <p className="text-xs text-slate-400 leading-relaxed font-medium">{rc.desc}</p>
-              </div>
+              </motion.div>
             ))}
           </div>
-        </section>
+        </motion.section>
 
         {/* Final CTA */}
-        <section className="mt-14 rounded-3xl border border-cyan-400/20 bg-gradient-to-r from-slate-950 via-[#0a1122] to-slate-950 p-8 text-center shadow-[0_0_36px_rgba(6,182,212,0.1)] backdrop-blur-xl">
+        <motion.section 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={fadeIn}
+          className="mt-14 rounded-3xl border border-cyan-400/20 bg-gradient-to-r from-slate-950 via-[#0a1122] to-slate-950 p-8 text-center shadow-[0_0_36px_rgba(6,182,212,0.1)] backdrop-blur-xl"
+        >
           <h3 className="font-heading text-2xl sm:text-3xl font-black text-white">Ready for the IQAC Review?</h3>
           <p className="mx-auto mt-3 max-w-xl text-xs sm:text-sm text-slate-300 leading-relaxed font-medium">
             Generate accreditation-ready reports and monitor academic health from a single command center.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <Link to="/auth" className="rounded-xl bg-gradient-to-r from-cyan-400 to-purple-500 px-6 py-2.5 text-xs font-bold text-[#04111f] transition hover:translate-y-[-1px]">
+            <Link to="/auth" className="rounded-xl bg-gradient-to-r from-cyan-400 to-purple-500 px-6 py-2.5 text-xs font-bold text-[#04111f] transition hover:scale-[1.02]">
               Open Admin Dashboard
             </Link>
             <Link to="/auth" className="rounded-xl border border-white/10 bg-white/5 px-6 py-2.5 text-xs font-bold text-slate-300 transition hover:bg-white/10">
               Generate Demo Report
             </Link>
           </div>
-        </section>
+        </motion.section>
 
         {/* Footer */}
         <footer className="mt-12 flex flex-col sm:flex-row items-center justify-between border-t border-white/10 pt-6 text-[10px] text-slate-500 font-semibold uppercase tracking-wider">

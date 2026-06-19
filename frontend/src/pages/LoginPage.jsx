@@ -2,6 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import client from "../api/client";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { scaleFade } from "../animations/motionPresets.js";
+
 
 const demoUsers = [
   { role: "Admin", email: "admin@iqac.edu", password: "Admin@123" },
@@ -14,6 +17,7 @@ export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [mode, setMode] = useState("login");
+  const shouldReduceMotion = useReducedMotion();
   
   const [loginForm, setLoginForm] = useState({
     email: "admin@iqac.edu",
@@ -110,8 +114,12 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-pattern grid place-items-center px-4">
-      <form
+      <motion.form
         onSubmit={onSubmit}
+        initial="hidden"
+        animate="visible"
+        variants={scaleFade}
+        custom={shouldReduceMotion}
         className="w-full max-w-md rounded-3xl border border-white/50 bg-white/75 p-6 shadow-lg backdrop-blur"
       >
         <div className="mb-4 inline-flex rounded-xl border border-brand-ink/15 bg-white p-1">
@@ -140,54 +148,63 @@ export default function LoginPage() {
             : "Create your student account to access academic performance, attendance, risk insights, and achievements."}
         </p>
 
-        <div className="mt-6 space-y-4">
-          {mode === "signup" && (
-            <input
-              name="name"
-              value={signupForm.name}
-              onChange={onSignupChange}
-              placeholder="Full Name"
-              className="w-full rounded-xl border border-brand-ink/20 bg-white px-4 py-3 outline-none focus:border-brand-ink focus:ring-2 focus:ring-brand-mint/40 transition-all"
-            />
-          )}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={mode}
+            initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: shouldReduceMotion ? 0 : -8 }}
+            transition={{ duration: 0.18 }}
+            className="mt-6 space-y-4"
+          >
+            {mode === "signup" && (
+              <input
+                name="name"
+                value={signupForm.name}
+                onChange={onSignupChange}
+                placeholder="Full Name"
+                className="w-full rounded-xl border border-brand-ink/20 bg-white px-4 py-3 outline-none focus:border-brand-ink focus:ring-2 focus:ring-brand-mint/40 transition-all"
+              />
+            )}
 
-          {mode === "signup" && (
-            <input
-              name="registrationNumber"
-              value={signupForm.registrationNumber}
-              onChange={onSignupChange}
-              placeholder="Student Registration Number"
-              className="w-full rounded-xl border border-brand-ink/20 bg-white px-4 py-3 outline-none focus:border-brand-ink focus:ring-2 focus:ring-brand-mint/40 transition-all"
-            />
-          )}
+            {mode === "signup" && (
+              <input
+                name="registrationNumber"
+                value={signupForm.registrationNumber}
+                onChange={onSignupChange}
+                placeholder="Student Registration Number"
+                className="w-full rounded-xl border border-brand-ink/20 bg-white px-4 py-3 outline-none focus:border-brand-ink focus:ring-2 focus:ring-brand-mint/40 transition-all"
+              />
+            )}
 
-          {mode === "signup" && (
-            <div className="space-y-2">
-              <div className="w-full rounded-xl border border-brand-ink/10 bg-brand-sand/50 px-4 py-3 text-sm text-brand-ink/80 font-medium">
-                Role: <span className="font-semibold text-brand-ink">Student</span>
+            {mode === "signup" && (
+              <div className="space-y-2">
+                <div className="w-full rounded-xl border border-brand-ink/10 bg-brand-sand/50 px-4 py-3 text-sm text-brand-ink/80 font-medium">
+                  Role: <span className="font-semibold text-brand-ink">Student</span>
+                </div>
+                <p className="text-[11px] text-brand-ink/60 px-1 leading-relaxed">
+                  Only student accounts can be created from public signup. Faculty and HOD accounts are issued by authorized IQAC administrators.
+                </p>
               </div>
-              <p className="text-[11px] text-brand-ink/60 px-1 leading-relaxed">
-                Only student accounts can be created from public signup. Faculty and HOD accounts are issued by authorized IQAC administrators.
-              </p>
-            </div>
-          )}
+            )}
 
-          <input
-            name="email"
-            value={mode === "login" ? loginForm.email : signupForm.email}
-            onChange={mode === "login" ? onLoginChange : onSignupChange}
-            placeholder={mode === "login" ? "Email / Registration Number / Faculty ID" : "Email Address"}
-            className="w-full rounded-xl border border-brand-ink/20 bg-white px-4 py-3 outline-none focus:border-brand-ink focus:ring-2 focus:ring-brand-mint/40 transition-all"
-          />
-          <input
-            name="password"
-            type="password"
-            value={mode === "login" ? loginForm.password : signupForm.password}
-            onChange={mode === "login" ? onLoginChange : onSignupChange}
-            placeholder="Password"
-            className="w-full rounded-xl border border-brand-ink/20 bg-white px-4 py-3 outline-none focus:border-brand-ink focus:ring-2 focus:ring-brand-mint/40 transition-all"
-          />
-        </div>
+            <input
+              name="email"
+              value={mode === "login" ? loginForm.email : signupForm.email}
+              onChange={mode === "login" ? onLoginChange : onSignupChange}
+              placeholder={mode === "login" ? "Email / Registration Number / Faculty ID" : "Email Address"}
+              className="w-full rounded-xl border border-brand-ink/20 bg-white px-4 py-3 outline-none focus:border-brand-ink focus:ring-2 focus:ring-brand-mint/40 transition-all"
+            />
+            <input
+              name="password"
+              type="password"
+              value={mode === "login" ? loginForm.password : signupForm.password}
+              onChange={mode === "login" ? onLoginChange : onSignupChange}
+              placeholder="Password"
+              className="w-full rounded-xl border border-brand-ink/20 bg-white px-4 py-3 outline-none focus:border-brand-ink focus:ring-2 focus:ring-brand-mint/40 transition-all"
+            />
+          </motion.div>
+        </AnimatePresence>
 
         {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
         {success && <p className="mt-3 text-sm text-green-700">{success}</p>}
@@ -208,11 +225,12 @@ export default function LoginPage() {
               {demoUsers.map((demo) => {
                 const isActive = selectedDemo === demo.role;
                 return (
-                  <button
+                  <motion.button
                     key={demo.role}
                     type="button"
                     onClick={() => handleDemoClick(demo)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 border backdrop-blur-sm cursor-pointer shadow-sm hover:-translate-y-0.5 active:translate-y-0 ${
+                    whileHover={shouldReduceMotion ? {} : { y: -2, scale: 1.03 }}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold border backdrop-blur-sm cursor-pointer shadow-sm ${
                       isActive
                         ? "bg-brand-ink text-brand-mint border-brand-mint/40 shadow-[0_0_10px_rgba(102,209,193,0.25)] scale-105"
                         : "bg-white/40 hover:bg-white/80 text-brand-ink/80 border-brand-ink/10 hover:border-brand-ink/30 hover:shadow-[0_0_8px_rgba(102,209,193,0.15)]"
@@ -220,7 +238,7 @@ export default function LoginPage() {
                     aria-label={`Fill ${demo.role} demo credentials`}
                   >
                     {demo.role}
-                  </button>
+                  </motion.button>
                 );
               })}
             </div>
@@ -231,7 +249,7 @@ export default function LoginPage() {
             )}
           </div>
         )}
-      </form>
+      </motion.form>
     </div>
   );
 }

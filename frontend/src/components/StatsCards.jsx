@@ -1,3 +1,6 @@
+import { motion, useReducedMotion } from "framer-motion";
+import { fadeUp, staggerContainer, getCardHoverProps } from "../animations/motionPresets.js";
+
 const CARD_ICONS = {
   "Total Students": (
     <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
@@ -66,12 +69,22 @@ function TrendArrow({ up }) {
 }
 
 export default function StatsCards({ stats }) {
+  const shouldReduceMotion = useReducedMotion();
+
   return (
-    <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <motion.section 
+      initial="hidden"
+      animate="visible"
+      variants={staggerContainer}
+      className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+    >
       {stats.map((card) => (
-        <article
+        <motion.article
           key={card.title}
-          className="group rounded-2xl border border-white/50 bg-white/55 p-4 shadow-lg shadow-slate-200/35 backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:shadow-xl"
+          variants={fadeUp}
+          custom={shouldReduceMotion}
+          {...getCardHoverProps(shouldReduceMotion)}
+          className="group rounded-2xl border border-white/50 bg-white/55 p-4 shadow-lg shadow-slate-200/35 backdrop-blur-md"
         >
           <div className={`rounded-xl bg-gradient-to-r ${card.color} p-4 text-white`}>
             <div className="flex items-center justify-between">
@@ -84,8 +97,8 @@ export default function StatsCards({ stats }) {
             <p className="mt-4 text-xs uppercase tracking-[0.16em] text-white/85">{card.title}</p>
             <p className="mt-1 text-3xl font-semibold">{card.value}</p>
           </div>
-        </article>
+        </motion.article>
       ))}
-    </section>
+    </motion.section>
   );
 }

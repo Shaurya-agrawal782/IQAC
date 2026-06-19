@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate as useNav, Link as RouterLink } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { useAuth } from "../context/AuthContext.jsx";
 import BackgroundVideo from "../components/BackgroundVideo.jsx";
+import { fadeIn, fadeUp, scaleFade, staggerContainer, getCardHoverProps } from "../animations/motionPresets.js";
+
 
 const roleLabel = {
   admin: "Admin",
@@ -148,6 +150,7 @@ function RippleButton({ children, to, onClick, className }) {
 export default function HomePage() {
   const { user, logout } = useAuth();
   const navigate = useNav();
+  const shouldReduceMotion = useReducedMotion();
   const normalizedRole = String(user?.role || "").toLowerCase() === "department" ? "hod" : String(user?.role || "").toLowerCase();
   const visibleLinks = dashboardLinks.filter((link) => link.allowed.includes(normalizedRole));
   const [heroTilt, setHeroTilt] = useState({ x: 0, y: 0 });
@@ -200,7 +203,7 @@ export default function HomePage() {
       <main className="relative z-10 mx-auto max-w-[1200px] px-4 pb-16 pt-4 sm:px-6">
         {/* Navigation Bar */}
         <motion.nav
-          initial={{ opacity: 0, y: -12 }}
+          initial={{ opacity: 0, y: shouldReduceMotion ? 0 : -12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cyan-500/10 hover:border-purple-500/20 bg-slate-950/50 px-5 py-3 shadow-[0_4px_30px_rgba(0,0,0,0.4)] backdrop-blur-md relative z-20"
@@ -264,7 +267,12 @@ export default function HomePage() {
 
         {/* Hero Section */}
         <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-center min-h-[58vh]">
-          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="space-y-4">
+          <motion.div
+            initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="space-y-4"
+          >
             <span className="inline-flex rounded-full border border-cyan-400/30 bg-cyan-400/5 px-3 py-1 text-[9px] font-bold uppercase tracking-[0.22em] text-cyan-400">
               FUTURE READY UNIVERSITY INTELLIGENCE
             </span>
@@ -300,7 +308,7 @@ export default function HomePage() {
           <motion.div
             onMouseMove={onHeroMove}
             onMouseLeave={onHeroLeave}
-            animate={{ rotateX: heroTilt.x, rotateY: heroTilt.y }}
+            animate={{ rotateX: shouldReduceMotion ? 0 : heroTilt.x, rotateY: shouldReduceMotion ? 0 : heroTilt.y }}
             transition={{ rotateX: { duration: 0.2 }, rotateY: { duration: 0.2 } }}
             className="relative"
             style={{ transformStyle: "preserve-3d" }}
@@ -311,7 +319,7 @@ export default function HomePage() {
 
         {/* Welcome Section */}
         <motion.section
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 15 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.5 }}
@@ -320,7 +328,7 @@ export default function HomePage() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <p className="text-[9px] font-bold uppercase tracking-wider text-slate-450">Welcome Panel</p>
+                <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Welcome Panel</p>
                 <span className="rounded-full bg-cyan-400/10 border border-cyan-400/20 px-2 py-0.5 text-[8px] font-bold uppercase text-cyan-300">
                   {modeBadge}
                 </span>
@@ -337,7 +345,13 @@ export default function HomePage() {
         </motion.section>
 
         {/* Section 1: Academic Health Pulse */}
-        <section className="mt-8 space-y-4">
+        <motion.section 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={staggerContainer}
+          className="mt-8 space-y-4"
+        >
           <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Academic Health Pulse</h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
@@ -374,9 +388,12 @@ export default function HomePage() {
                 icon: Icons.Department
               }
             ].map((card) => (
-              <div
+              <motion.div
                 key={card.title}
-                className={`rounded-2xl border bg-slate-950/40 p-5 backdrop-blur-md transition duration-300 hover:scale-[1.01] ${card.color}`}
+                variants={fadeUp}
+                custom={shouldReduceMotion}
+                {...getCardHoverProps(shouldReduceMotion)}
+                className={`rounded-2xl border bg-slate-950/40 p-5 backdrop-blur-md ${card.color}`}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-300">{card.title}</span>
@@ -386,15 +403,25 @@ export default function HomePage() {
                   <span className={`text-2xl font-black ${card.valColor}`}>{card.value}</span>
                 </div>
                 <p className="text-xs text-slate-400 mt-2 leading-relaxed font-medium">{card.desc}</p>
-              </div>
+              </motion.div>
             ))}
           </div>
-        </section>
+        </motion.section>
 
         {/* Section 2: Accreditation Readiness Timeline */}
-        <section id="timeline" className="mt-8 space-y-4">
+        <motion.section 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={staggerContainer}
+          id="timeline" 
+          className="mt-8 space-y-4"
+        >
           <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Accreditation Readiness Timeline</h3>
-          <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl shadow-lg relative overflow-hidden">
+          <motion.div 
+            variants={fadeIn}
+            className="rounded-2xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl shadow-lg relative overflow-hidden"
+          >
             {/* Horizontal line for desktop */}
             <div className="absolute top-12 left-8 right-8 hidden md:block h-0.5 bg-white/10" />
 
@@ -406,7 +433,12 @@ export default function HomePage() {
                 { name: "IQAC Review", desc: "Final verification and approval by IQAC committee.", status: "pending", color: "text-amber-400", border: "border-amber-500" },
                 { name: "Report Export", desc: "Generating formatted PDF & Excel audit files.", status: "pending", color: "text-slate-500", border: "border-slate-600" }
               ].map((step, idx) => (
-                <div key={step.name} className="flex flex-col items-center md:items-start text-center md:text-left">
+                <motion.div 
+                  key={step.name} 
+                  variants={fadeUp}
+                  custom={shouldReduceMotion}
+                  className="flex flex-col items-center md:items-start text-center md:text-left"
+                >
                   <div className="flex items-center gap-3 md:flex-col md:items-start">
                     <div className={`h-7 w-7 rounded-full flex items-center justify-center font-black text-xs bg-slate-950 border-2 ${step.border} mb-2`}>
                       {idx + 1}
@@ -414,14 +446,20 @@ export default function HomePage() {
                     <h4 className={`text-xs font-bold ${step.color}`}>{step.name}</h4>
                   </div>
                   <p className="text-[11px] text-slate-400 mt-1 md:mt-2 px-2 md:px-0 leading-relaxed font-medium">{step.desc}</p>
-                </div>
+                </motion.div>
               ))}
             </div>
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
 
         {/* Section 3: Compliance AI Recommendations */}
-        <section className="mt-8 space-y-4">
+        <motion.section 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={staggerContainer}
+          className="mt-8 space-y-4"
+        >
           <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Compliance AI Recommendations</h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
@@ -430,20 +468,32 @@ export default function HomePage() {
               { text: "ECE placement trend dropped by 8% compared to last cycle.", severity: "Insight", color: "border-cyan-500/20 text-cyan-400 bg-cyan-500/5 shadow-[0_0_15px_rgba(6,182,212,0.04)]" },
               { text: "Faculty publication contribution improved by 14% this semester.", severity: "Positive", color: "border-emerald-500/20 text-emerald-400 bg-emerald-500/5 shadow-[0_0_15px_rgba(16,185,129,0.04)]" }
             ].map((rec) => (
-              <div key={rec.text} className={`rounded-2xl border p-4.5 backdrop-blur-xl flex flex-col justify-between hover:scale-[1.01] transition duration-300 ${rec.color}`}>
+              <motion.div 
+                key={rec.text} 
+                variants={fadeUp}
+                custom={shouldReduceMotion}
+                {...getCardHoverProps(shouldReduceMotion)}
+                className={`rounded-2xl border p-4.5 backdrop-blur-xl flex flex-col justify-between ${rec.color}`}
+              >
                 <div className="mb-3">
                   <span className="rounded-full bg-white/5 border border-white/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">
                     {rec.severity}
                   </span>
                 </div>
                 <p className="text-xs text-slate-200 leading-relaxed font-medium">{rec.text}</p>
-              </div>
+              </motion.div>
             ))}
           </div>
-        </section>
+        </motion.section>
 
         {/* Section 4: Role-Based Command Centers */}
-        <section className="mt-8 space-y-4">
+        <motion.section 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={staggerContainer}
+          className="mt-8 space-y-4"
+        >
           <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Role-Based Command Centers</h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
@@ -452,14 +502,20 @@ export default function HomePage() {
               { role: "Faculty", desc: "Student attendance and marks entry, personal research publications upload, and direct mentor-mentee actions." },
               { role: "Student", desc: "CGPA trend monitoring, subject-wise attendance logs, risk alert notifications, and extra-curricular achievements upload." }
             ].map((rc) => (
-              <div key={rc.role} className="rounded-2xl border border-white/10 bg-slate-900/35 p-5 backdrop-blur-xl hover:border-white/15 transition duration-300">
+              <motion.div 
+                key={rc.role} 
+                variants={fadeUp}
+                custom={shouldReduceMotion}
+                {...getCardHoverProps(shouldReduceMotion)}
+                className="rounded-2xl border border-white/10 bg-slate-900/35 p-5 backdrop-blur-xl hover:border-white/15"
+              >
                 <span className="text-[9px] font-bold uppercase tracking-widest text-cyan-400 block mb-2">{rc.role} Workspace</span>
                 <h4 className="text-sm font-bold text-white mb-2">{rc.role} Command</h4>
                 <p className="text-xs text-slate-400 leading-relaxed font-medium">{rc.desc}</p>
-              </div>
+              </motion.div>
             ))}
           </div>
-        </section>
+        </motion.section>
       </main>
 
       <style>{`
