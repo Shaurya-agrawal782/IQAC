@@ -7,7 +7,7 @@ const demoUsers = [
   { role: "Admin", email: "admin@iqac.edu", password: "Admin@123" },
   { role: "HOD", email: "hod.cse@iqac.edu", password: "Admin@123" },
   { role: "Faculty", email: "faculty.cse@iqac.edu", password: "Admin@123" },
-  { role: "Student", email: "cse001@student.iqac.edu", password: "Admin@123" }
+  { role: "Student", email: "ravi@student.iqac.edu", password: "Admin@123" }
 ];
 
 export default function LoginPage() {
