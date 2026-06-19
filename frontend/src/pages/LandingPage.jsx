@@ -121,8 +121,36 @@ export default function LandingPage() {
         {/* Navigation Bar */}
         <header className="flex items-center justify-between rounded-2xl border border-cyan-500/10 hover:border-purple-500/20 bg-slate-950/50 px-5 py-3 shadow-[0_4px_30px_rgba(0,0,0,0.4)] backdrop-blur-md relative z-20">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-purple-500 font-black text-white text-sm shadow-[0_0_15px_rgba(6,182,212,0.5)]">
-              IQ
+            <div className="relative flex h-9 w-9 items-center justify-center">
+              <svg className="h-8 w-8" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="landing-logo-grad" x1="2" y1="2" x2="30" y2="30" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="#66D1C1" />
+                    <stop offset="40%" stopColor="#0ea5e9" />
+                    <stop offset="100%" stopColor="#0D6EFD" />
+                  </linearGradient>
+                  <linearGradient id="landing-logo-accent" x1="30" y1="2" x2="2" y2="30" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.8" />
+                    <stop offset="100%" stopColor="#818cf8" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                <circle cx="16" cy="16" r="14" fill="url(#landing-logo-grad)" opacity="0.15" className="animate-pulse" />
+                <path 
+                  d="M16 4C9.37258 4 4 9.37258 4 16C4 22.6274 9.37258 28 16 28C22.6274 28 28 22.6274 28 16C28 14.2828 27.6394 12.6499 26.989 11.168" 
+                  stroke="url(#landing-logo-grad)" 
+                  strokeWidth="3.2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                />
+                <path 
+                  d="M21 21L27.5 27.5" 
+                  stroke="url(#landing-logo-grad)" 
+                  strokeWidth="3.5" 
+                  strokeLinecap="round" 
+                />
+                <circle cx="16" cy="16" r="3.5" fill="#FFFFFF" />
+                <circle cx="16" cy="16" r="7" stroke="url(#landing-logo-accent)" strokeWidth="1.5" />
+              </svg>
             </div>
             <div>
               <h1 className="text-sm font-black tracking-wider text-white">IQAC Command Center</h1>
