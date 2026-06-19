@@ -9,6 +9,7 @@
     "start": "node src/server.js",
     "seed": "node src/utils/seedDemoData.js",
     "seed:core": "node src/utils/seedCoreDataNoUser.js",
+    "seed:realistic": "node src/utils/seedRealisticIndianData.js",
     "scrape:faculty": "node scrapeFaculty.js"
   },
   "dependencies": {
