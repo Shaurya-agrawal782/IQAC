@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate as useNav, Link as RouterLink } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useAuth } from "../context/AuthContext.jsx";
-import CinematicBackground from "../components/CinematicBackground.jsx";
+import BackgroundVideo from "../components/BackgroundVideo.jsx";
 
 const roleLabel = {
   admin: "Admin",
@@ -150,49 +150,10 @@ export default function HomePage() {
   const navigate = useNav();
   const normalizedRole = String(user?.role || "").toLowerCase() === "department" ? "hod" : String(user?.role || "").toLowerCase();
   const visibleLinks = dashboardLinks.filter((link) => link.allowed.includes(normalizedRole));
-  const [phraseIndex, setPhraseIndex] = useState(0);
-  const [typedText, setTypedText] = useState("");
-  const [isDeleting, setIsDeleting] = useState(false);
   const [heroTilt, setHeroTilt] = useState({ x: 0, y: 0 });
-  const [typingState, setTypingState] = useState("typing"); // typing, pauseTyping, deleting, pauseDeleting
 
   const primaryLink = visibleLinks[0]?.to || "/home";
   const analyticsLink = visibleLinks.find((x) => x.to !== primaryLink)?.to || primaryLink;
-
-  // Typing animation loop with premium pauses
-  useEffect(() => {
-    const fullText = rotatingPhrases[phraseIndex];
-    let timer;
-
-    if (typingState === "typing") {
-      if (typedText.length < fullText.length) {
-        timer = setTimeout(() => {
-          setTypedText(fullText.slice(0, typedText.length + 1));
-        }, 60);
-      } else {
-        setTypingState("pauseTyping");
-      }
-    } else if (typingState === "pauseTyping") {
-      timer = setTimeout(() => {
-        setTypingState("deleting");
-      }, 1800);
-    } else if (typingState === "deleting") {
-      if (typedText.length > 0) {
-        timer = setTimeout(() => {
-          setTypedText(fullText.slice(0, typedText.length - 1));
-        }, 30);
-      } else {
-        setTypingState("pauseDeleting");
-      }
-    } else if (typingState === "pauseDeleting") {
-      timer = setTimeout(() => {
-        setPhraseIndex((prev) => (prev + 1) % rotatingPhrases.length);
-        setTypingState("typing");
-      }, 300);
-    }
-
-    return () => clearTimeout(timer);
-  }, [typedText, phraseIndex, typingState]);
 
   const navLinks = useMemo(
     () => [
@@ -224,9 +185,17 @@ export default function HomePage() {
     : "AI monitoring is actively tracking institutional academic performance and accreditation readiness signals.";
   const modeBadge = `${roleLabel[normalizedRole] || normalizedRole} Mode`;
 
+  const roleStatus = {
+    admin: "Institution-wide command access enabled.",
+    hod: "Department intelligence workspace ready.",
+    faculty: "Academic contribution and mentoring workspace ready.",
+    student: "Personal academic health dashboard ready."
+  };
+  const statusLine = roleStatus[normalizedRole] || "Academic monitoring and intelligence active.";
+
   return (
-    <div className="relative min-h-screen bg-[#040814] text-white overflow-x-hidden">
-      <CinematicBackground />
+    <div className="relative min-h-screen bg-[#020617] text-white overflow-x-hidden">
+      <BackgroundVideo />
 
       <main className="relative z-10 mx-auto max-w-[1200px] px-4 pb-16 pt-4 sm:px-6">
         {/* Navigation Bar */}
@@ -234,7 +203,7 @@ export default function HomePage() {
           initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-900/40 px-5 py-3 shadow-[0_4px_30px_rgba(0,0,0,0.4)] backdrop-blur-xl"
+          className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cyan-500/10 hover:border-purple-500/20 bg-slate-950/50 px-5 py-3 shadow-[0_4px_30px_rgba(0,0,0,0.4)] backdrop-blur-md relative z-20"
         >
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-purple-500 font-black text-white text-sm shadow-[0_0_15px_rgba(6,182,212,0.5)]">
@@ -242,7 +211,7 @@ export default function HomePage() {
             </div>
             <div>
               <p className="text-sm font-black tracking-wider text-white">IQAC Command Center</p>
-              <p className="text-[9px] text-slate-400">AI-Powered Monitoring and Accreditation Dashboard</p>
+              <p className="text-[9px] text-slate-400">AI-Powered Academic Intelligence</p>
             </div>
           </div>
 
@@ -269,19 +238,22 @@ export default function HomePage() {
         <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-center min-h-[58vh]">
           <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="space-y-4">
             <span className="inline-flex rounded-full border border-cyan-400/30 bg-cyan-400/5 px-3 py-1 text-[9px] font-bold uppercase tracking-[0.22em] text-cyan-400">
-              Future Ready University Intelligence
+              FUTURE READY UNIVERSITY INTELLIGENCE
             </span>
             <h1 className="text-balance text-3xl sm:text-4xl lg:text-5xl font-black leading-tight text-white">
-              AI-Powered <span className="bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">IQAC Command Center</span>
+              Welcome to the <span className="bg-gradient-to-r from-cyan-400 via-blue-100 to-purple-400 bg-clip-text text-transparent">IQAC Command Center</span>
             </h1>
 
-            <div className="min-h-8 text-cyan-300 text-base sm:text-lg flex items-center font-semibold">
-              <span>{typedText}</span>
-              <span className="ml-1 inline-block h-5 w-[1.5px] animate-pulse bg-cyan-400 align-middle" />
+            <div className="min-h-8 text-cyan-300 text-sm sm:text-base flex items-center gap-2 font-semibold">
+              <span className="flex h-2 w-2 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+              </span>
+              <span>{statusLine}</span>
             </div>
 
             <p className="max-w-2xl text-xs sm:text-sm text-slate-300 leading-relaxed font-medium">
-              A cinematic academic intelligence layer for student risk, faculty contribution, department KPIs, accreditation evidence, and NAAC/NBA-ready reports.
+              Monitor academic health, accreditation readiness, student risk, faculty contribution, and department intelligence from one secure academic portal.
             </p>
 
             <div className="flex flex-wrap gap-3 pt-2">
@@ -289,10 +261,10 @@ export default function HomePage() {
                 to={primaryLink}
                 className="rounded-xl bg-gradient-to-r from-cyan-500 to-purple-500 px-6 py-2.5 text-xs font-bold text-[#04111f] shadow-lg shadow-cyan-500/20 transition hover:scale-[1.02]"
               >
-                Enter Command Center
+                Open Portal
               </RippleButton>
               <a href="#timeline" className="rounded-xl border border-white/10 bg-white/5 px-6 py-2.5 text-xs font-bold text-slate-200 transition hover:bg-white/10">
-                View Accreditation Map
+                View Academic Intelligence
               </a>
             </div>
           </motion.div>
@@ -315,7 +287,7 @@ export default function HomePage() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.5 }}
-          className="mt-8 rounded-2xl border border-white/10 bg-slate-900/40 p-5 backdrop-blur-xl shadow-lg"
+          className="mt-8 rounded-2xl border border-cyan-500/10 hover:border-purple-500/20 bg-slate-950/50 p-5 backdrop-blur-md shadow-lg"
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -339,12 +311,12 @@ export default function HomePage() {
         {/* Section 1: Academic Health Pulse */}
         <section className="mt-8 space-y-4">
           <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Academic Health Pulse</h3>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
               {
-                title: "Student Risk",
+                title: "Student Risk Analysis",
                 value: "42",
-                desc: "Learners flagged for immediate mentor intervention",
+                desc: "Track attendance, CGPA, backlogs, and intervention signals.",
                 color: "border-rose-500/20 shadow-[0_0_20px_rgba(244,63,94,0.06)] hover:border-rose-500/35",
                 valColor: "text-rose-400",
                 icon: Icons.Risk
@@ -352,32 +324,40 @@ export default function HomePage() {
               {
                 title: "Faculty Contribution",
                 value: "126",
-                desc: "Research publications and FDP outcomes registered",
+                desc: "Monitor research, FDP, mentoring, and academic contribution.",
                 color: "border-cyan-500/20 shadow-[0_0_20px_rgba(6,182,212,0.06)] hover:border-cyan-500/35",
                 valColor: "text-cyan-400",
                 icon: Icons.Faculty
               },
               {
-                title: "Department Quality",
+                title: "Department Intelligence",
                 value: "7",
-                desc: "Departments benchmarked across quality index parameters",
+                desc: "Compare department KPIs, pass percentage, placement, and quality signals.",
                 color: "border-purple-500/20 shadow-[0_0_20px_rgba(168,85,247,0.06)] hover:border-purple-500/35",
                 valColor: "text-purple-400",
+                icon: Icons.Department
+              },
+              {
+                title: "Accreditation Monitoring",
+                value: "78%",
+                desc: "Review NAAC/NBA evidence, missing items, and readiness status.",
+                color: "border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.06)] hover:border-emerald-500/35",
+                valColor: "text-emerald-400",
                 icon: Icons.Department
               }
             ].map((card) => (
               <div
                 key={card.title}
-                className={`rounded-2xl border bg-slate-900/40 p-5 backdrop-blur-xl transition duration-300 hover:scale-[1.01] ${card.color}`}
+                className={`rounded-2xl border bg-slate-950/40 p-5 backdrop-blur-md transition duration-300 hover:scale-[1.01] ${card.color}`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-300">{card.title}</span>
+                  <span className="text-xs font-bold text-slate-300">{card.title}</span>
                   <card.icon />
                 </div>
                 <div className="mt-3 flex items-baseline gap-2">
-                  <span className={`text-3xl font-black ${card.valColor}`}>{card.value}</span>
+                  <span className={`text-2xl font-black ${card.valColor}`}>{card.value}</span>
                 </div>
-                <p className="text-xs text-slate-400 mt-2 leading-relaxed">{card.desc}</p>
+                <p className="text-xs text-slate-400 mt-2 leading-relaxed font-medium">{card.desc}</p>
               </div>
             ))}
           </div>
