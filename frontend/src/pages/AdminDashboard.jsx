@@ -9,6 +9,8 @@ import NlqSearchBar from "../components/NlqSearchBar.jsx";
 import ActionPriorityScoreCard from "../components/digitalTwin/ActionPriorityScoreCard.jsx";
 import InterventionQueue from "../components/digitalTwin/InterventionQueue.jsx";
 import WhatIfSimulator from "../components/digitalTwin/WhatIfSimulator.jsx";
+import GeminiInterventionCopilot from "../components/digitalTwin/GeminiInterventionCopilot.jsx";
+
 
 const NAV_ITEMS = [
   "Overview",
@@ -18,6 +20,17 @@ const NAV_ITEMS = [
   "Department Compare",
   "Institutional Analysis"
 ];
+
+const DRIVER_LABELS = {
+  low_attendance: "Attendance",
+  cgpa_decline: "GPA Decline",
+  active_backlogs: "Backlogs",
+  subject_failures: "Failures",
+  placement_readiness_gap: "Placement Gap",
+  accreditation_gap: "Accreditation",
+  low_engagement: "Engagement",
+  low_risk: "Healthy"
+};
 
 export default function AdminDashboard() {
   const [activeItem, setActiveItem] = useState("Overview");
@@ -254,36 +267,152 @@ export default function AdminDashboard() {
 
             {/* College Digital Twin Intervention Engine */}
             <section className="space-y-4">
-              <div>
-                <h3 className="font-heading text-xl text-brand-ink dark:text-white">
-                  College Digital Twin Intervention Engine
-                </h3>
-                <p className="text-sm text-brand-ink/75 dark:text-slate-400">
-                  Ranks students, cohorts, departments, and accreditation gaps by urgency using existing academic and IQAC data.
-                </p>
+              <div className="flex flex-wrap items-end justify-between gap-4">
+                <div className="space-y-1">
+                  <h2 className="font-heading text-2xl font-bold text-brand-ink dark:text-white">
+                    College Digital Twin Intervention Engine
+                  </h2>
+                  <p className="text-sm text-brand-ink/75 dark:text-slate-400">
+                    Ranks urgent academic, placement, and accreditation risks, then simulates intervention impact.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  <span className="inline-flex items-center rounded-full bg-brand-ocean/10 px-2.5 py-1 text-[10px] font-bold text-brand-ocean dark:bg-sky-450/10 dark:text-sky-400">
+                    Live from academic data
+                  </span>
+                  <span className="inline-flex items-center rounded-full bg-brand-mint/10 px-2.5 py-1 text-[10px] font-bold text-emerald-600 dark:bg-emerald-450/10 dark:text-emerald-450">
+                    Explainable scoring
+                  </span>
+                  <span className="inline-flex items-center rounded-full bg-brand-flame/10 px-2.5 py-1 text-[10px] font-bold text-brand-flame dark:bg-rose-450/10 dark:text-rose-400">
+                    Scenario simulation
+                  </span>
+                </div>
               </div>
 
               {priorityLoading ? (
-                <div className="rounded-3xl border border-white/45 bg-white/45 p-6 text-center text-sm text-brand-ink/60 dark:bg-slate-900/30">
-                  Analyzing institutional datasets & calculating urgency indexes...
+                <div className="space-y-5 animate-pulse">
+                  {/* Top Row Skeletons */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    {[1, 2, 3].map((n) => (
+                      <div key={n} className="h-44 rounded-3xl border border-slate-200/40 bg-gradient-to-br from-blue-50/20 via-white/80 to-cyan-50/20 p-5 dark:border-white/5 dark:bg-slate-900/30 flex flex-col justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="h-16 w-16 rounded-full bg-slate-200/50 dark:bg-slate-800"></div>
+                          <div className="flex-1 space-y-2">
+                            <div className="h-3 w-16 bg-slate-200/50 dark:bg-slate-800 rounded"></div>
+                            <div className="h-4 w-32 bg-slate-200/50 dark:bg-slate-800 rounded"></div>
+                          </div>
+                        </div>
+                        <div className="h-3.5 bg-slate-200/50 dark:bg-slate-800 rounded w-5/6"></div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Bottom Row Skeletons */}
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+                    <div className="h-96 rounded-3xl border border-slate-200/40 bg-gradient-to-br from-blue-50/20 via-white/80 to-cyan-50/20 p-5 dark:border-white/5 dark:bg-slate-900/30"></div>
+                    <div className="h-96 rounded-3xl border border-slate-200/40 bg-gradient-to-br from-blue-50/20 via-white/80 to-cyan-50/20 p-5 dark:border-white/5 dark:bg-slate-900/30"></div>
+                  </div>
                 </div>
               ) : priorityError ? (
-                <div className="rounded-3xl border border-white/45 bg-white/45 p-6 text-center text-sm text-red-500 dark:bg-slate-900/30">
+                <div className="rounded-3xl border border-slate-200 bg-white/70 p-6 text-center text-sm text-red-500 dark:bg-slate-900/30">
                   {priorityError}
                 </div>
               ) : (
                 <div className="space-y-5">
-                  <div className="grid gap-5 xl:grid-cols-[1.2fr,2fr]">
+                  {/* Top Row: 3 Insight Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                     <ActionPriorityScoreCard overview={priorityOverview} />
+                    
+                    {/* Card 2: Critical Gaps Card (rose gradient) */}
+                    <article className="rounded-3xl border border-slate-200/40 bg-gradient-to-br from-rose-50/40 via-white/80 to-white/90 p-5 shadow-sm backdrop-blur-md dark:border-white/10 dark:from-rose-950/10 dark:bg-slate-900/80 flex flex-col justify-between h-full transition-all duration-300 hover:shadow-md">
+                      <div>
+                        <span className="block text-[9px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                          System Threat Counter
+                        </span>
+                        <h4 className="mt-1.5 font-heading text-base font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                          Urgent Risk Vectors
+                        </h4>
+                      </div>
+
+                      <div className="mt-4 flex items-center gap-4">
+                        <div className="flex-1 text-center bg-[#fff1f2] border border-[#fecdd3] rounded-2xl py-3 px-2 dark:bg-[#e11d48]/15 dark:border-[#e11d48]/30">
+                          <span className="block text-2xl font-black text-[#e11d48] dark:text-rose-400 leading-none">
+                            {priorityOverview.criticalItems || 0}
+                          </span>
+                          <span className="mt-1 block text-[9px] font-bold text-rose-600 dark:text-rose-455 uppercase tracking-wide">
+                            Critical
+                          </span>
+                        </div>
+                        <div className="flex-1 text-center bg-[#fffbeb] border border-[#fde68a] rounded-2xl py-3 px-2 dark:bg-[#d97706]/15 dark:border-[#d97706]/30">
+                          <span className="block text-2xl font-black text-[#d97706] dark:text-amber-400 leading-none">
+                            {priorityOverview.highItems || 0}
+                          </span>
+                          <span className="mt-1 block text-[9px] font-bold text-amber-600 dark:text-amber-455 uppercase tracking-wide">
+                            High Urgency
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 pt-3 border-t border-slate-200/40 dark:border-white/10">
+                        <span className="block text-[8.5px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                          Status Overview
+                        </span>
+                        <p className="mt-0.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                          Requires intervention simulation before execution.
+                        </p>
+                      </div>
+                    </article>
+
+                    {/* Card 3: Urgency Drivers & Average APS (indigo gradient) */}
+                    <article className="rounded-3xl border border-slate-200/40 bg-gradient-to-br from-indigo-50/40 via-white/80 to-white/90 p-5 shadow-sm backdrop-blur-md dark:border-white/10 dark:from-indigo-950/10 dark:bg-slate-900/80 flex flex-col justify-between h-full transition-all duration-300 hover:shadow-md">
+                      <div>
+                        <span className="block text-[9px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                          Core Engine Indicator
+                        </span>
+                        <h4 className="mt-1.5 font-heading text-base font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                          Average Urgency Score
+                        </h4>
+                      </div>
+
+                      <div className="mt-4 flex items-center justify-between gap-3">
+                        <div className="flex items-baseline gap-1">
+                          <span className={`text-3xl font-black ${priorityOverview.actionPriorityScore >= 80 ? "text-[#e11d48] dark:text-rose-400" : priorityOverview.actionPriorityScore >= 60 ? "text-[#d97706] dark:text-amber-400" : "text-[#2563eb] dark:text-blue-450"}`}>
+                            {priorityOverview.actionPriorityScore || 0}
+                          </span>
+                          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">/ 100 APS</span>
+                        </div>
+                        
+                        <div className="text-right">
+                          <span className="block text-[8px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Primary Driver</span>
+                          <span className="mt-0.5 inline-block rounded-lg bg-[#eff6ff] border border-[#bfdbfe] px-2 py-0.5 text-[10px] font-bold text-[#2563eb] dark:bg-blue-950/30 dark:text-sky-400 dark:border-sky-900/30 font-body">
+                            {DRIVER_LABELS[priorityOverview.mainDrivers?.[0]] || priorityOverview.mainDrivers?.[0] || "None"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 pt-3 border-t border-slate-200/40 dark:border-white/10">
+                        <span className="block text-[8.5px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                          Risk Drivers Analysis
+                        </span>
+                        <p className="mt-0.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                          Primary threat component affecting overall score.
+                        </p>
+                      </div>
+                    </article>
+                  </div>
+
+                  {/* Second Row: Queue and Simulator Side-by-Side */}
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 items-stretch">
                     <InterventionQueue
                       items={priorityQueue}
                       onSimulateIntervention={setSelectedPriorityEntity}
                     />
+                    <WhatIfSimulator
+                      selectedEntity={selectedPriorityEntity}
+                      defaultBaseline={priorityQueue && priorityQueue[0] ? priorityQueue[0] : null}
+                    />
                   </div>
-                  <WhatIfSimulator
-                    selectedEntity={selectedPriorityEntity}
-                    defaultBaseline={priorityQueue && priorityQueue[0] ? priorityQueue[0] : null}
-                  />
+
+                  <GeminiInterventionCopilot selectedEntity={selectedPriorityEntity} />
                 </div>
               )}
             </section>

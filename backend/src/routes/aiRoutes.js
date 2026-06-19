@@ -12,7 +12,8 @@ import {
   naturalLanguageSearch,
   streamingSearch,
   studentIntervention,
-  departmentRanking
+  departmentRanking,
+  getInterventionCopilotAnswer
 } from "../controllers/aiController.js";
 
 const router = Router();
@@ -32,5 +33,6 @@ router.post("/search-stream",              authorize("admin", "hod", "faculty"),
 
 router.get("/student-intervention/:id",    authorize("admin", "hod", "faculty"), studentIntervention);
 router.get("/department-ranking",          authorize("admin", "hod", "faculty"), departmentRanking);
+router.post("/intervention-copilot",       authorize("admin", "hod", "faculty"), getInterventionCopilotAnswer);
 
 export default router;

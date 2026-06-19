@@ -13,6 +13,7 @@
     "scrape:faculty": "node scrapeFaculty.js"
   },
   "dependencies": {
+    "@google/genai": "^2.9.0",
     "axios": "^1.13.6",
     "bcryptjs": "^2.4.3",
     "cheerio": "^1.2.0",

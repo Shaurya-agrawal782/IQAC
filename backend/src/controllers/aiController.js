@@ -13,6 +13,11 @@ import {
   buildStreamingSearchPrompt
 } from "../services/llmService.js";
 
+import { computePriorityQueueAndOverview } from "../utils/priorityDataHelper.js";
+import { simulateInterventionImpact } from "../utils/riskEngine.js";
+import { getGeminiInterventionAdvice } from "../services/geminiInterventionService.js";
+
+
 import Student from "../models/Student.js";
 import Department from "../models/Department.js";
 import Mark from "../models/Mark.js";
@@ -769,4 +774,108 @@ export const streamingSearch = async (req, res) => {
 
   res.end();
 };
+
+export const getInterventionCopilotAnswer = async (req, res) => {
+  try {
+    const { question, selectedEntity, simulationAdjustments, scope = {} } = req.body;
+
+    // A. Fetch priority overview & queue context using the helper
+    const dataContext = await computePriorityQueueAndOverview({
+      department: scope.department || "",
+      semester: scope.semester || ""
+    });
+
+    const topEntityItem = dataContext.summary.topEntityItem;
+    
+    // B. Context setup
+    const activeEntity = selectedEntity || topEntityItem;
+
+    // C. Default scenario simulation parameters
+    const defaultAdjustments = simulationAdjustments || {
+      attendanceDelta: 10,
+      mentorMeetings: 2,
+      remedialSessions: 2,
+      skillBootcamp: true,
+      expectedBacklogsCleared: 2,
+      evidenceItemsCompleted: 4
+    };
+
+    let simulationResult = null;
+    if (activeEntity && activeEntity.metrics) {
+      simulationResult = simulateInterventionImpact(activeEntity.metrics, defaultAdjustments);
+    }
+
+    // Build the compact context payload for LLM service (top 5 to preserve token space)
+    const topQueueItems = (dataContext.items || [])
+      .slice(0, 5)
+      .map(item => ({
+        id: item.id,
+        entityType: item.entityType,
+        label: item.label,
+        score: item.score,
+        severity: item.severity,
+        drivers: item.drivers,
+        reasons: item.reasons
+      }));
+
+    const overview = {
+      actionPriorityScore: dataContext.summary.averageScore,
+      criticalItems: dataContext.summary.criticalCount,
+      highItems: dataContext.summary.highCount,
+      topEntity: topEntityItem ? topEntityItem.label : "None",
+      mainDrivers: topEntityItem ? topEntityItem.drivers : []
+    };
+
+    const contextData = {
+      overview,
+      topPriorityItem: topEntityItem ? {
+        id: topEntityItem.id,
+        entityType: topEntityItem.entityType,
+        label: topEntityItem.label,
+        score: topEntityItem.score,
+        severity: topEntityItem.severity,
+        reasons: topEntityItem.reasons,
+        recommendedActions: topEntityItem.recommendedActions
+      } : null,
+      selectedEntity: selectedEntity ? {
+        id: selectedEntity.id,
+        entityType: selectedEntity.entityType,
+        label: selectedEntity.label,
+        score: selectedEntity.score,
+        severity: selectedEntity.severity,
+        reasons: selectedEntity.reasons,
+        recommendedActions: selectedEntity.recommendedActions
+      } : null,
+      simulationResult,
+      topQueueItems
+    };
+
+    // E. Invoke the Gemini service
+    const copilotResult = await getGeminiInterventionAdvice(contextData, question || "Which department/student needs urgent intervention?");
+
+    // F. Return formatted response
+    res.status(200).json({
+      success: true,
+      data: {
+        provider: copilotResult.provider,
+        fallbackUsed: copilotResult.fallbackUsed,
+        generatedAt: new Date().toISOString(),
+        question,
+        answer: copilotResult.answer,
+        toolTrace: [
+          "action_priority_queue",
+          "action_priority_overview",
+          "what_if_simulation"
+        ]
+      }
+    });
+  } catch (error) {
+    console.error("Error in getInterventionCopilotAnswer:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error during copilot generation"
+    });
+  }
+};
+
 
