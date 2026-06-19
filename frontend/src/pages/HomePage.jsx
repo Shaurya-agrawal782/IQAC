@@ -180,7 +180,7 @@ export default function HomePage() {
 
   // Welcome banner calculations
   const welcomeText = normalizedRole === "admin" ? "Welcome back, IQAC Coordinator" : `Welcome back, ${user?.name || "Member"}`;
-  const subWelcomeText = normalizedRole === "admin" 
+  const subWelcomeText = normalizedRole === "admin"
     ? "Your institution has 78% accreditation readiness, 42 high-risk learners, and 18 pending evidence items today."
     : "AI monitoring is actively tracking institutional academic performance and accreditation readiness signals.";
   const modeBadge = `${roleLabel[normalizedRole] || normalizedRole} Mode`;

@@ -9,25 +9,25 @@ export default function RiskChart({ data }) {
 
       <SafeChartContainer className="mt-4 h-80 w-full min-w-0" minHeight={320}>
         {(size) => (
-            <PieChart width={size.width} height={size.height}>
-              <Pie
-                data={data}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                outerRadius={110}
-                innerRadius={55}
-                isAnimationActive
-                animationDuration={1000}
-              >
-                {data.map((entry) => (
-                  <Cell key={entry.name} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
+          <PieChart width={size.width} height={size.height}>
+            <Pie
+              data={data}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              outerRadius={110}
+              innerRadius={55}
+              isAnimationActive
+              animationDuration={1000}
+            >
+              {data.map((entry) => (
+                <Cell key={entry.name} fill={entry.color} />
+              ))}
+            </Pie>
+            <Tooltip />
+            <Legend />
+          </PieChart>
         )}
       </SafeChartContainer>
     </section>

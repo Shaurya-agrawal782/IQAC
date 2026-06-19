@@ -76,7 +76,7 @@ export default function AdminDashboard() {
       const blob = new Blob([res.data], { type: documentFormat === "PDF" ? "application/pdf" : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
-      
+
       const ext = documentFormat === "PDF" ? "pdf" : "xlsx";
       a.href = url;
       a.download = `${reportType.toLowerCase()}_report.${ext}`;
@@ -312,11 +312,11 @@ export default function AdminDashboard() {
                   <div className="rounded-2xl border border-white/55 bg-white/70 p-6 shadow-sm">
                     <h4 className="font-semibold text-brand-ink">Generate New System Report</h4>
                     <p className="mt-2 text-sm text-brand-ink/75">Select the report type and format. System will auto-aggregate data and attach LLM analysis where applicable.</p>
-                    
+
                     <div className="mt-5 grid max-w-lg gap-4">
                       <div>
                         <label className="text-sm font-medium text-brand-ink/80 block mb-1">Report Target</label>
-                        <select 
+                        <select
                           className="w-full rounded-xl border-brand-ink/20 bg-white/80 p-2 text-sm shadow-sm outline-none focus:border-brand-ocean focus:ring-1 focus:ring-brand-ocean"
                           value={reportType}
                           onChange={(e) => setReportType(e.target.value)}
@@ -332,7 +332,7 @@ export default function AdminDashboard() {
 
                       <div>
                         <label className="text-sm font-medium text-brand-ink/80 block mb-1">Export Format</label>
-                        <select 
+                        <select
                           className="w-full rounded-xl border-brand-ink/20 bg-white/80 p-2 text-sm shadow-sm outline-none focus:border-brand-ocean focus:ring-1 focus:ring-brand-ocean"
                           value={documentFormat}
                           onChange={(e) => setDocumentFormat(e.target.value)}

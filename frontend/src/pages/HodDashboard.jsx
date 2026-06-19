@@ -342,15 +342,15 @@ export default function HodDashboard() {
             <Panel title="Student Risk Distribution">
               <SafeChartContainer className="h-72 w-full min-w-0" minHeight={280}>
                 {(size) => (
-                    <PieChart width={size.width} height={size.height}>
-                      <Pie data={riskChartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={110} innerRadius={52}>
-                        {riskChartData.map((entry) => (
-                          <Cell key={entry.name} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
+                  <PieChart width={size.width} height={size.height}>
+                    <Pie data={riskChartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={110} innerRadius={52}>
+                      {riskChartData.map((entry) => (
+                        <Cell key={entry.name} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
                 )}
               </SafeChartContainer>
             </Panel>
@@ -358,14 +358,14 @@ export default function HodDashboard() {
             <Panel title="Section Performance Comparison">
               <SafeChartContainer className="h-72 w-full min-w-0" minHeight={280}>
                 {(size) => (
-                    <BarChart width={size.width} height={size.height} data={dashboard.sectionPerformance || []}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#d5deea" />
-                      <XAxis dataKey="section" />
-                      <YAxis domain={[0, 10]} />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="averageCgpa" name="Average CGPA" fill="#2563eb" radius={[8, 8, 0, 0]} />
-                    </BarChart>
+                  <BarChart width={size.width} height={size.height} data={dashboard.sectionPerformance || []}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#d5deea" />
+                    <XAxis dataKey="section" />
+                    <YAxis domain={[0, 10]} />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="averageCgpa" name="Average CGPA" fill="#2563eb" radius={[8, 8, 0, 0]} />
+                  </BarChart>
                 )}
               </SafeChartContainer>
             </Panel>
@@ -465,14 +465,14 @@ export default function HodDashboard() {
             <Panel title="Subject Pass Percentage">
               <SafeChartContainer className="h-72 w-full min-w-0" minHeight={280}>
                 {(size) => (
-                    <BarChart width={size.width} height={size.height} data={dashboard.subjectPassPercentage || []}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#d5deea" />
-                      <XAxis dataKey="subject" tick={{ fontSize: 10 }} />
-                      <YAxis domain={[0, 100]} />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="passPercentage" name="Pass %" fill="#10b981" radius={[8, 8, 0, 0]} />
-                    </BarChart>
+                  <BarChart width={size.width} height={size.height} data={dashboard.subjectPassPercentage || []}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#d5deea" />
+                    <XAxis dataKey="subject" tick={{ fontSize: 10 }} />
+                    <YAxis domain={[0, 100]} />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="passPercentage" name="Pass %" fill="#10b981" radius={[8, 8, 0, 0]} />
+                  </BarChart>
                 )}
               </SafeChartContainer>
             </Panel>
@@ -480,14 +480,14 @@ export default function HodDashboard() {
             <Panel title="Backlog Analytics">
               <SafeChartContainer className="h-72 w-full min-w-0" minHeight={280}>
                 {(size) => (
-                    <BarChart width={size.width} height={size.height} data={dashboard.backlogAnalysis || []}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#d5deea" />
-                      <XAxis dataKey="semester" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="backlogCount" name="Backlog Count" fill="#f97316" radius={[8, 8, 0, 0]} />
-                    </BarChart>
+                  <BarChart width={size.width} height={size.height} data={dashboard.backlogAnalysis || []}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#d5deea" />
+                    <XAxis dataKey="semester" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="backlogCount" name="Backlog Count" fill="#f97316" radius={[8, 8, 0, 0]} />
+                  </BarChart>
                 )}
               </SafeChartContainer>
             </Panel>
@@ -504,14 +504,14 @@ export default function HodDashboard() {
               <div className="rounded-xl border border-sky-200 bg-sky-50 p-2">
                 <SafeChartContainer className="h-52 w-full min-w-0" minHeight={200}>
                   {(size) => (
-                      <BarChart width={size.width} height={size.height} data={dashboard.sectionAttendanceTrends || []}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#d5deea" />
-                        <XAxis dataKey="section" tick={{ fontSize: 11 }} />
-                        <YAxis domain={[0, 100]} />
-                        <Tooltip />
-                        <Legend />
-                        <Bar dataKey="attendancePercent" name="Attendance %" fill="#0284c7" radius={[8, 8, 0, 0]} />
-                      </BarChart>
+                    <BarChart width={size.width} height={size.height} data={dashboard.sectionAttendanceTrends || []}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#d5deea" />
+                      <XAxis dataKey="section" tick={{ fontSize: 11 }} />
+                      <YAxis domain={[0, 100]} />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="attendancePercent" name="Attendance %" fill="#0284c7" radius={[8, 8, 0, 0]} />
+                    </BarChart>
                   )}
                 </SafeChartContainer>
               </div>

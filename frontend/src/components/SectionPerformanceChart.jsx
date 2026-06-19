@@ -8,15 +8,15 @@ export default function SectionPerformanceChart({ data }) {
       <p className="mt-1 text-sm text-brand-ink/75">Average marks and pass percentage by section.</p>
       <SafeChartContainer className="mt-4 h-72 w-full min-w-0" minHeight={280}>
         {(size) => (
-            <BarChart width={size.width} height={size.height} data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#d5deea" />
-              <XAxis dataKey="section" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="averageMarks" name="Average Marks" fill="#2563eb" radius={[8, 8, 0, 0]} isAnimationActive animationDuration={900} />
-              <Bar dataKey="passPercent" name="Pass %" fill="#14b8a6" radius={[8, 8, 0, 0]} isAnimationActive animationDuration={1200} />
-            </BarChart>
+          <BarChart width={size.width} height={size.height} data={data}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#d5deea" />
+            <XAxis dataKey="section" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="averageMarks" name="Average Marks" fill="#2563eb" radius={[8, 8, 0, 0]} isAnimationActive animationDuration={900} />
+            <Bar dataKey="passPercent" name="Pass %" fill="#14b8a6" radius={[8, 8, 0, 0]} isAnimationActive animationDuration={1200} />
+          </BarChart>
         )}
       </SafeChartContainer>
     </section>

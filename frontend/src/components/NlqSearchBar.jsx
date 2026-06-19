@@ -18,7 +18,7 @@ export default function NlqSearchBar({ departmentId }) {
     try {
       const payload = { question: query };
       if (departmentId) payload.department = departmentId;
-      
+
       const { data } = await client.post("/ai/search", payload);
       setAnswer(data.data?.answer || "No response generated.");
     } catch (err) {
@@ -56,7 +56,7 @@ export default function NlqSearchBar({ departmentId }) {
           )}
         </button>
       </form>
-      
+
       {(answer || error) && (
         <div className="border-t border-brand-ocean/10 bg-gradient-to-br from-brand-ocean/5 to-transparent p-5">
           {error ? (

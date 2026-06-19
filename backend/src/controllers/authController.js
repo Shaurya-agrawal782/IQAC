@@ -114,11 +114,10 @@ export const me = async (req, res) => {
 
 export const publicRegister = async (req, res) => {
   const { name, email, password, role, registrationNumber, facultyId } = req.body;
-  const normalizedRole = normalizeIncomingRole(role);
-  const allowedRoles = ["student", "hod", "admin", "faculty"];
+  const normalizedRole = normalizeIncomingRole(role || "student");
 
-  if (!allowedRoles.includes(normalizedRole)) {
-    return res.status(400).json({ success: false, message: "Invalid role for signup" });
+  if (normalizedRole !== "student") {
+    return res.status(403).json({ success: false, message: "Public signup is allowed only for students." });
   }
 
   const existingUser = await User.findOne({ email });

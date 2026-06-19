@@ -20,7 +20,7 @@ import { authorize, protect } from "../middleware/authMiddleware.js";
 
 const router = Router();
 
-router.post("/add", protect, authorize("admin"), addFaculty);
+router.post("/add", protect, authorize("admin", "hod"), addFaculty);
 router.get("/", protect, authorize("admin", "hod", "faculty"), getAllFaculty);
 router.put("/update", protect, authorize("admin", "hod"), updateFaculty);
 router.post("/allocations", protect, authorize("admin", "hod"), upsertSectionAllocation);

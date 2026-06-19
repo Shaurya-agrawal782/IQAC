@@ -9,17 +9,17 @@ export default function DepartmentChart({ data }) {
 
       <SafeChartContainer className="mt-4 h-80 w-full min-w-0" minHeight={320}>
         {(size) => (
-            <BarChart width={size.width} height={size.height} data={data} margin={{ top: 10, right: 8, left: -10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#d5deea" />
-              <XAxis dataKey="department" tick={{ fontSize: 11 }} />
-              <YAxis yAxisId="percent" tick={{ fontSize: 11 }} domain={[0, 100]} />
-              <YAxis yAxisId="cgpa" orientation="right" tick={{ fontSize: 11 }} domain={[0, 10]} />
-              <Tooltip />
-              <Legend />
-              <Bar yAxisId="percent" dataKey="passPercentage" name="Pass Percentage" fill="#2563eb" radius={[8, 8, 0, 0]} isAnimationActive animationDuration={1000} />
-              <Bar yAxisId="percent" dataKey="placementRate" name="Placement Rate" fill="#06b6d4" radius={[8, 8, 0, 0]} isAnimationActive animationDuration={1250} />
-              <Bar yAxisId="cgpa" dataKey="averageCGPA" name="Average CGPA" fill="#14b8a6" radius={[8, 8, 0, 0]} isAnimationActive animationDuration={1450} />
-            </BarChart>
+          <BarChart width={size.width} height={size.height} data={data} margin={{ top: 10, right: 8, left: -10, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#d5deea" />
+            <XAxis dataKey="department" tick={{ fontSize: 11 }} />
+            <YAxis yAxisId="percent" tick={{ fontSize: 11 }} domain={[0, 100]} />
+            <YAxis yAxisId="cgpa" orientation="right" tick={{ fontSize: 11 }} domain={[0, 10]} />
+            <Tooltip />
+            <Legend />
+            <Bar yAxisId="percent" dataKey="passPercentage" name="Pass Percentage" fill="#2563eb" radius={[8, 8, 0, 0]} isAnimationActive animationDuration={1000} />
+            <Bar yAxisId="percent" dataKey="placementRate" name="Placement Rate" fill="#06b6d4" radius={[8, 8, 0, 0]} isAnimationActive animationDuration={1250} />
+            <Bar yAxisId="cgpa" dataKey="averageCGPA" name="Average CGPA" fill="#14b8a6" radius={[8, 8, 0, 0]} isAnimationActive animationDuration={1450} />
+          </BarChart>
         )}
       </SafeChartContainer>
     </section>

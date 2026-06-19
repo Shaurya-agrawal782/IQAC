@@ -68,10 +68,12 @@ button {
 }
 
 @keyframes float-orb {
+
   0%,
   100% {
     transform: translateY(0px) translateX(0px) scale(1);
   }
+
   50% {
     transform: translateY(-16px) translateX(10px) scale(1.06);
   }

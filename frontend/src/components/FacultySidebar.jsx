@@ -67,11 +67,10 @@ export default function FacultySidebar({ items, active, onChange, title = "Facul
             <button
               key={item}
               onClick={() => onChange(item)}
-              className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-medium transition-all duration-200 ${
-                isActive
+              className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-medium transition-all duration-200 ${isActive
                   ? "bg-gradient-to-r from-brand-ink to-brand-ocean text-white shadow-md"
                   : "text-brand-ink/80 hover:bg-white hover:text-brand-ink"
-              }`}
+                }`}
             >
               <span className={`transition ${isActive ? "text-white" : "text-brand-ocean group-hover:text-brand-ink"}`}>{MENU_ICONS[item]}</span>
               <span>{item}</span>

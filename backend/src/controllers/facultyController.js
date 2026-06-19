@@ -118,6 +118,13 @@ const resolveFacultyDepartmentId = async (user) => {
 };
 
 export const addFaculty = async (req, res) => {
+  if (req.user.role === "hod") {
+    if (!req.user.department) {
+      return res.status(403).json({ success: false, message: "HOD has no department assigned" });
+    }
+    req.body.department = req.user.department.toString();
+  }
+
   const {
     name,
     employeeId,

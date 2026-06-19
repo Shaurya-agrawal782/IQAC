@@ -15,7 +15,7 @@ import { authorize, protect } from "../middleware/authMiddleware.js";
 
 const router = Router();
 
-router.post("/", protect, authorize("admin", "hod"), createStudent);
+router.post("/", protect, authorize("admin"), createStudent);
 router.get("/", protect, authorize("admin", "hod", "faculty"), listStudents);
 router.get("/me/dashboard", protect, authorize("student"), getMyStudentDashboard);
 router.get("/:studentId/profile", protect, authorize("admin", "hod", "faculty", "student"), getStudentProfile);

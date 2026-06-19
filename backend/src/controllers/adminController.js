@@ -300,8 +300,17 @@ export const listAdminEntities = async (_, res) => {
 
 export const createHodCredentials = async (req, res) => {
   const { name, email, departmentId, password } = req.body;
+  if (!departmentId) {
+    return res.status(400).json({ success: false, message: "Department ID is required" });
+  }
+
   const department = await Department.findById(departmentId);
   if (!department) return res.status(404).json({ success: false, message: "Department not found" });
+
+  const existingHod = await User.findOne({ role: "hod", department: departmentId });
+  if (existingHod) {
+    return res.status(400).json({ success: false, message: "A HOD has already been created for this department" });
+  }
 
   const existing = await User.findOne({ email });
   if (existing) return res.status(400).json({ success: false, message: "Email already exists" });
