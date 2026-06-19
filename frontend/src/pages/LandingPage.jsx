@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import CinematicBackground from "../components/CinematicBackground.jsx";
+import BackgroundVideo from "../components/BackgroundVideo.jsx";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
@@ -24,12 +24,12 @@ const Icons = {
 };
 
 const rotatingPhrases = [
-  "Monitoring Students",
-  "Monitoring Faculty",
-  "Monitoring Departments",
-  "Monitoring Accreditation",
-  "Monitoring Reports",
-  "Monitoring Risk Signals"
+  "Students",
+  "Faculty",
+  "Departments",
+  "Accreditation",
+  "Reports",
+  "Risk Signals"
 ];
 
 function MiniLivePulsePanel() {
@@ -38,7 +38,7 @@ function MiniLivePulsePanel() {
       <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
         <div>
           <span className="text-[9px] font-bold uppercase tracking-wider text-cyan-400">Institutional Pulse</span>
-          <h4 className="text-xs font-semibold text-white">IQAC Live Metrics</h4>
+          <h4 className="text-xs font-semibold text-white">IQAC Live Pulse</h4>
         </div>
         <span className="flex h-2 w-2 relative">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
@@ -99,58 +99,34 @@ function MiniLivePulsePanel() {
 
 export default function LandingPage() {
   const [phraseIndex, setPhraseIndex] = useState(0);
-  const [typedText, setTypedText] = useState("");
-  const [typingState, setTypingState] = useState("typing"); // typing, pauseTyping, deleting, pauseDeleting
+  const [fadeState, setFadeState] = useState("fade-in");
 
-  // Typing animation loop with pauses
   useEffect(() => {
-    const fullText = rotatingPhrases[phraseIndex];
-    let timer;
-
-    if (typingState === "typing") {
-      if (typedText.length < fullText.length) {
-        timer = setTimeout(() => {
-          setTypedText(fullText.slice(0, typedText.length + 1));
-        }, 60);
-      } else {
-        setTypingState("pauseTyping");
-      }
-    } else if (typingState === "pauseTyping") {
-      timer = setTimeout(() => {
-        setTypingState("deleting");
-      }, 1800);
-    } else if (typingState === "deleting") {
-      if (typedText.length > 0) {
-        timer = setTimeout(() => {
-          setTypedText(fullText.slice(0, typedText.length - 1));
-        }, 30);
-      } else {
-        setTypingState("pauseDeleting");
-      }
-    } else if (typingState === "pauseDeleting") {
-      timer = setTimeout(() => {
+    const timer = setInterval(() => {
+      setFadeState("fade-out");
+      setTimeout(() => {
         setPhraseIndex((prev) => (prev + 1) % rotatingPhrases.length);
-        setTypingState("typing");
-      }, 300);
-    }
+        setFadeState("fade-in");
+      }, 500);
+    }, 3500);
 
-    return () => clearTimeout(timer);
-  }, [typedText, phraseIndex, typingState]);
+    return () => clearInterval(timer);
+  }, []);
 
   return (
-    <div className="relative min-h-screen bg-[#040814] text-white overflow-x-hidden">
-      <CinematicBackground />
+    <div className="relative min-h-screen bg-[#020617] text-white overflow-x-hidden">
+      <BackgroundVideo />
 
       <main className="relative z-10 mx-auto max-w-[1200px] px-4 pb-16 pt-4 sm:px-6">
         {/* Navigation Bar */}
-        <header className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-900/40 px-5 py-3 shadow-[0_4px_30px_rgba(0,0,0,0.4)] backdrop-blur-xl">
+        <header className="flex items-center justify-between rounded-2xl border border-cyan-500/10 hover:border-purple-500/20 bg-slate-950/50 px-5 py-3 shadow-[0_4px_30px_rgba(0,0,0,0.4)] backdrop-blur-md relative z-20">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-purple-500 font-black text-white text-sm shadow-[0_0_15px_rgba(6,182,212,0.5)]">
               IQ
             </div>
             <div>
               <h1 className="text-sm font-black tracking-wider text-white">IQAC Command Center</h1>
-              <p className="text-[9px] text-slate-400">AI-Powered Monitoring and Accreditation Dashboard</p>
+              <p className="text-[9px] text-slate-400">AI-Powered Academic Intelligence</p>
             </div>
           </div>
           <Link to="/auth" className="rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-1.5 text-xs font-semibold text-cyan-300 shadow-[0_0_15px_rgba(34,211,238,0.2)] transition hover:bg-cyan-400/20 hover:scale-[1.02]">
@@ -162,17 +138,18 @@ export default function LandingPage() {
         <section className="mt-8 grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-center min-h-[58vh]">
           <div className="space-y-4">
             <span className="inline-flex rounded-full border border-cyan-400/30 bg-cyan-400/5 px-3 py-1 text-[9px] font-bold uppercase tracking-[0.22em] text-cyan-400">
-              Future Ready University Intelligence
+              FUTURE READY UNIVERSITY INTELLIGENCE
             </span>
             <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-black leading-tight text-white">
-              AI-Powered <span className="bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">IQAC Command Center</span>
+              AI-Powered <span className="bg-gradient-to-r from-cyan-400 via-blue-100 to-purple-400 bg-clip-text text-transparent">IQAC Command Center</span>
             </h2>
-            <div className="min-h-8 text-cyan-300 text-base sm:text-lg flex items-center font-semibold">
-              <span>{typedText}</span>
-              <span className="ml-1 inline-block h-5 w-[1.5px] animate-pulse bg-cyan-400 align-middle" />
+            <div className="min-h-8 text-cyan-300 text-sm sm:text-base flex items-center font-semibold">
+              <span className={`transition-opacity duration-500 ease-in-out ${fadeState === "fade-in" ? "opacity-100" : "opacity-0"}`}>
+                Monitoring {rotatingPhrases[phraseIndex]}
+              </span>
             </div>
             <p className="max-w-2xl text-xs sm:text-sm text-slate-300 leading-relaxed font-medium">
-              A cinematic academic intelligence layer for student risk, faculty contribution, department KPIs, accreditation evidence, and NAAC/NBA-ready reports.
+              Monitor student risk, faculty contribution, department KPIs, accreditation evidence, and NAAC/NBA-ready reports from one intelligent dashboard.
             </p>
 
             <div className="flex flex-wrap gap-3 pt-2">
